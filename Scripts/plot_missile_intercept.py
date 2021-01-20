@@ -1,14 +1,5 @@
-"""
-Repository: missile-intercepts
-Description: Define classes for ballistic and interceptor missiles
-Sources:
-    - University of Florida, Department of Mechanical & Aerospace Engineering
-    (https://mae.ufl.edu/~uhk/ICBM.pdf)
-    - MIT Department of Aeronautics and Astronautics
-    (https://web.mit.edu/16.unified/www/FALL/systems/Lab_Notes/traj.pdf)
-    - NASA Glenn Research Center
-    (https://www.grc.nasa.gov/www/k-12/airplane/ballflght.html)
-"""
+"""Ballistic and interceptor missile classes."""
+
 # Import packages
 from typing import Optional
 import inspect
