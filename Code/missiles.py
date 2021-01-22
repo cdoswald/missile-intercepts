@@ -15,7 +15,6 @@ scriptdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe
 parentdir = os.path.dirname(scriptdir)
 sys.path.insert(0, parentdir)
 import geo_utils as geo
-import kml_utils
 
 # Define constants
 EARTH_RADIUS_KM = 6378
@@ -294,6 +293,7 @@ if __name__ == '__main__':
     test_missile.__dict__
     test_missile.launch()
     data = pd.DataFrame.from_dict(test_missile.trajectory_dict, orient='index')
+    data = data.reset_index().rename(columns={'index':'time_sec'})
     
 # =============================================================================
 # Archive

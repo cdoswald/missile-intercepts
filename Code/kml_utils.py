@@ -2,7 +2,6 @@
 
 # Import packages
 from typing import List, Tuple
-import numpy as np
 
 import pykml
 import simplekml
@@ -36,14 +35,16 @@ def create_kml_point(
 
 def create_kml_linestring(
     fol: simplekml.featgeom.Folder,
-    coords_list: List[Tuple[float, float]],
+    lonlat_list: List[Tuple[float, float]], #Longitude first for simplekml
     style: simplekml.styleselector.Style,
     label: str = '',
+    close_linestring: bool = False,
 ) -> simplekml.featgeom.Folder:
     """Create a simplekml Linestring object with location and style attributes."""
     linestring = fol.newlinestring(name=label)
-    coords_list.append(coords_list[0]) # Close linestring object
-    linestring.coords = coords_list
+    if close_linestring:
+        lonlat_list.append(lonlat_list[0])
+    linestring.coords = lonlat_list
     linestring.style = style
     return fol
 
