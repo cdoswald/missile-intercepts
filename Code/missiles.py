@@ -286,15 +286,16 @@ class BallisticMissile():
 
 if __name__ == '__main__':
     test_missile = BallisticMissile()
-    test_missile.set_launchpoint(39.7392, 104.9903)
-    test_missile.set_aimpoint(41.1400, 104.8202)
-    test_missile.set_time_to_target(150)
+    test_missile.set_launchpoint(39.7392, -104.9903)
+    test_missile.set_aimpoint(41.1400, -104.8202)
+    test_missile.set_time_to_target(180)
     test_missile.build()        
     test_missile.__dict__
     test_missile.launch()
     data = pd.DataFrame.from_dict(test_missile.trajectory_dict, orient='index')
     data = data.reset_index().rename(columns={'index':'time_sec'})
-    
+    data['alt_m'] = geo.km_to_meters(data['alt_km'])
+    del data['alt_km']
 # =============================================================================
 # Archive
 # =============================================================================
