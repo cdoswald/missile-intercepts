@@ -18,35 +18,42 @@ def create_kml_pnt_style(
     return style
 
 def create_kml_point(
-    fol: simplekml.featgeom.Folder,
-    lat: float,
-    lon: float,
+    kml_folder: simplekml.featgeom.Folder,
+    lat_deg: float,
+    lon_deg: float,
     style: simplekml.styleselector.Style,
+    alt_meters: float = 0,
     pnt_label: str = '',
     timespan_begin: str = '',
     timespan_end: str = '',
 ) -> simplekml.featgeom.Folder:
     """Create a simplekml Point object with location, time, and style attributes."""
-    pnt = fol.newpoint(name=pnt_label, coords=[(lon, lat)])
+    pnt = kml_folder.newpoint(name=pnt_label, coords=[(lon_deg, lat_deg, alt_meters)])
+    pnt.altitudemode = simplekml.AltitudeMode.relativetoground
     pnt.style = style
     pnt.timespan.begin = timespan_begin
     pnt.timespan.end = timespan_end
-    return fol
+    return kml_folder
 
 def create_kml_linestring(
-    fol: simplekml.featgeom.Folder,
-    lonlat_list: List[Tuple[float, float]], #Longitude first for simplekml
+    kml_folder: simplekml.featgeom.Folder,
+    lon_lat_alt_list: List[Tuple[float, float, float]], #Longitude, latitude, altitude for simplekml
     style: simplekml.styleselector.Style,
     label: str = '',
     close_linestring: bool = False,
+    timespan_begin: str = '',
+    timespan_end: str = '',
 ) -> simplekml.featgeom.Folder:
     """Create a simplekml Linestring object with location and style attributes."""
-    linestring = fol.newlinestring(name=label)
+    linestring = kml_folder.newlinestring(name=label)
     if close_linestring:
-        lonlat_list.append(lonlat_list[0])
-    linestring.coords = lonlat_list
+        lon_lat_alt_list.append(lon_lat_alt_list[0])
+    linestring.coords = lon_lat_alt_list
+    linestring.altitudemode = simplekml.AltitudeMode.relativetoground
     linestring.style = style
-    return fol
+    linestring.timespan.begin = timespan_begin
+    linestring.timespan.end = timespan_end
+    return kml_folder
 
 def create_kml_polygon():
     """Placeholder for simplekml polygon function."""
