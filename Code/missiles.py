@@ -73,7 +73,7 @@ class BallisticMissile():
             time_to_target_sec = float(input('Enter time to target (sec): '))
             self.set_time_to_target(time_to_target_sec)
         self.set_distance_to_target()
-        self.set_initial_bearing()
+        self.set_launchpoint_bearing()
         self.set_horizontal_velocity()
         self.set_max_change_in_vertical_velocity()
         self.set_initial_vertical_velocity()
@@ -84,8 +84,8 @@ class BallisticMissile():
         self,
         timestep_sec: float = 1,
     ) -> None:
-        """Record tuple of missile position (latitude, longitude, altitude)
-        for each timestep.
+        """Record missile position (latitude, longitude, altitude, bearing)
+        for each timestep from launch until impact.
         
         Arguments
             timestep_sec: Timestep interval in seconds
@@ -100,7 +100,8 @@ class BallisticMissile():
             trajectory_dict[elapsed_time_sec] = {
                 'lat_deg':self.current_latlon_deg[0],
                 'lon_deg':self.current_latlon_deg[1],
-                'alt_km':self.current_altitude_km
+                'alt_km':self.current_altitude_km,
+                'bearing_deg':self.current_bearing_deg,
             }
         self.trajectory_dict = trajectory_dict
     
@@ -119,12 +120,17 @@ class BallisticMissile():
             origin_lat_deg=self.launch_latlon_deg[0],
             origin_lon_deg=self.launch_latlon_deg[1],
             distance_km=dist_traveled_km,
-            initial_bearing_deg=self.initial_bearing_deg,
+            initial_bearing_deg=self.launchpoint_initial_bearing_deg,
         )
         # Altitude (integrate current vertical velocity formula)
         self.current_altitude_km = (
             self.initial_vert_vel_km_per_sec * elapsed_time_sec
             + (0.5 * GRAVITY_ACCEL_KM_PER_S2 * elapsed_time_sec**2)
+        )
+        # Bearing (from current position, not from launchpoint)
+        self.current_bearing_deg = self.compute_current_bearing(
+            position_lat_deg=self.current_latlon_deg[0],
+            position_lon_deg=self.current_latlon_deg[1],
         )
 
     def set_launchpoint(
@@ -180,7 +186,7 @@ class BallisticMissile():
                 dest_lon_deg=self.aimpoint_latlon_deg[1],
             )
 
-    def set_initial_bearing(self) -> None:
+    def set_launchpoint_bearing(self) -> None:
         """Compute and set forward azimuth/initial bearing from launchpoint
         to aimpoint. Bearing measured in degrees, clockwise from North."""
         if not self.launch_latlon_deg or None in self.launch_latlon_deg:
@@ -188,7 +194,7 @@ class BallisticMissile():
         elif not self.aimpoint_latlon_deg or None in self.aimpoint_latlon_deg:
             print('Aimpoint coordinates not set. Bearing could not be calculated.')
         else:
-            self.initial_bearing_deg = geo.calculate_initial_bearing(
+            self.launchpoint_initial_bearing_deg = geo.calculate_initial_bearing(
                 origin_lat_deg=self.launch_latlon_deg[0],
                 origin_lon_deg=self.launch_latlon_deg[1],
                 dest_lat_deg=self.aimpoint_latlon_deg[0],
@@ -258,7 +264,22 @@ class BallisticMissile():
         )
         print('Initial launch angle is '+
               f'{round(self.initial_launch_angle_deg, 2)} degrees.')
-
+            
+    def compute_current_bearing(
+        self,
+        position_lat_deg: float,
+        position_lon_deg: float,
+    ) -> float:
+        """Compute forward azimuth/initial bearing from current location to 
+        aimpoint. Bearing measured in degrees, clockwise from North."""
+        current_bearing_deg = geo.calculate_initial_bearing(
+            origin_lat_deg=position_lat_deg,
+            origin_lon_deg=position_lon_deg,
+            dest_lat_deg=self.aimpoint_latlon_deg[0],
+            dest_lon_deg=self.aimpoint_latlon_deg[1],
+            )
+        return current_bearing_deg
+        
     def compute_current_vertical_velocity(
         self,
         elapsed_time_sec: float,
@@ -288,7 +309,7 @@ if __name__ == '__main__':
     test_missile = BallisticMissile()
     test_missile.set_launchpoint(39.7392, -104.9903)
     test_missile.set_aimpoint(41.1400, -104.8202)
-    test_missile.set_time_to_target(180)
+    test_missile.set_time_to_target(150)
     test_missile.build()        
     test_missile.__dict__
     test_missile.launch()
