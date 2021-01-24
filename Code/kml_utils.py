@@ -7,17 +7,19 @@ import pykml
 import simplekml
 
 # Define functions
-def create_kml_pnt_style(
+def create_kml_point_style(
     icon_path: str,
     icon_scale: float = 1.0,
+    heading: float = 0.0,
 ) -> simplekml.styleselector.Style:
     """Create a simplekml Style object with specified icon and scale."""
     style = simplekml.Style()
     style.iconstyle.icon.href = icon_path
     style.iconstyle.scale = icon_scale
+    style.iconstyle.heading = heading
     return style
 
-def create_kml_point(
+def add_kml_point(
     kml_folder: simplekml.featgeom.Folder,
     lat_deg: float,
     lon_deg: float,
@@ -27,32 +29,65 @@ def create_kml_point(
     timespan_begin: str = '',
     timespan_end: str = '',
 ) -> simplekml.featgeom.Folder:
-    """Create a simplekml Point object with location, time, and style attributes."""
-    pnt = kml_folder.newpoint(name=pnt_label, coords=[(lon_deg, lat_deg, alt_meters)])
-    pnt.altitudemode = simplekml.AltitudeMode.relativetoground
+    """Add a simplekml Point object to existing KML folder.
+    
+    Arguments
+        kml_folder: simplekml folder to which to add a new point object
+        lat_deg: point latitude in degrees
+        lon_deg: point longitude in degrees
+        style: simplekml point style
+        alt_meters: point altitude in meters (relative to ground)
+        pnt_label: string label for point
+        timespan_begin: string (in KML format) indicating point start time
+        timespan_end: string (in KML format) indicating point end time
+    
+    Returns
+        kml_folder: simplekml folder with newly added point object
+    """
+    pnt = kml_folder.newpoint(
+        name=pnt_label,
+        coords=[(lon_deg, lat_deg, alt_meters)]
+    )
     pnt.style = style
     pnt.timespan.begin = timespan_begin
     pnt.timespan.end = timespan_end
+    pnt.altitudemode = simplekml.AltitudeMode.relativetoground
     return kml_folder
 
-def create_kml_linestring(
+def add_kml_linestring(
     kml_folder: simplekml.featgeom.Folder,
-    lon_lat_alt_list: List[Tuple[float, float, float]], #Longitude, latitude, altitude for simplekml
+    lon_lat_alt_list: List[Tuple[float, float, float]],
     style: simplekml.styleselector.Style,
-    label: str = '',
-    close_linestring: bool = False,
+    linestring_label: str = '',
     timespan_begin: str = '',
     timespan_end: str = '',
+    close_linestring: bool = False,
 ) -> simplekml.featgeom.Folder:
-    """Create a simplekml Linestring object with location and style attributes."""
-    linestring = kml_folder.newlinestring(name=label)
+    """Add a simplekml Linestring object to existing KML folder.
+    
+    Arguments
+        kml_folder: simplekml folder to which to add a new linestring object
+        lon_lat_alt_list: list of 3-length tuples indicating longitude (degrees),
+            latitude (degrees), and altitude (meters) for each point in linestring;
+            NOTE that longitude precedes latitude in simplekml objects
+        style: simplekml linestring style
+        linestring_label: string label for linestring
+        timespan_begin: string (in KML format) indicating linestring start time
+        timespan_end: string (in KML format) indicating linestring end time
+        close_linestring: flag if linestring should connect from last point
+            to first point in lon_lat_alt_list
+    
+    Returns
+        kml_folder: simplekml folder with newly added linestring object
+    """
+    linestring = kml_folder.newlinestring(name=linestring_label)
     if close_linestring:
         lon_lat_alt_list.append(lon_lat_alt_list[0])
     linestring.coords = lon_lat_alt_list
-    linestring.altitudemode = simplekml.AltitudeMode.relativetoground
     linestring.style = style
     linestring.timespan.begin = timespan_begin
     linestring.timespan.end = timespan_end
+    linestring.altitudemode = simplekml.AltitudeMode.relativetoground
     return kml_folder
 
 def create_kml_polygon():
