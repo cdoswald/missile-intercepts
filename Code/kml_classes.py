@@ -64,7 +64,6 @@ class KMLTrajectorySim():
         self.kml_time_format = kml_time_format
         self.kml = simplekml.Kml()
         self.set_sim_start_end_times()
-        self.set_styles()
         
     def set_sim_start_end_times(
         self,
@@ -85,62 +84,95 @@ class KMLTrajectorySim():
         )).strftime(self.kml_time_format)
 
     def create_trajectory(self) -> None:
-        """Create KML points and linestrings tracing missile trajectory."""
+        """Create KML GxTrack tracing missile trajectory."""
+        track_style = kml_utils.create_kml_track_style(
+            icon_path='../Icons/missile3.png',
+            icon_scale=0.5,
+        )
+        lon_lat_alt_list = []
+        timestamp_list = []
         for idx in self.data.index:
-            kml_folder = self.kml.newfolder(name=f'Point {idx}')
-            position_dict = self.data.loc[idx].to_dict()
-            # Determine start/end times for points and linestrings
-            if idx == self.data.index.min():
-                timespan_begin = self.sim_start_time
-            else:
-                timespan_begin = (self.launch_time + timedelta(
-                    seconds=position_dict[self.time_colname]
-                )).strftime(self.kml_time_format)
-            if idx == self.data.index.max():
-                pnt_timespan_end = self.sim_end_time
-            else:
-                next_position_dict = self.data.loc[idx+1].to_dict()
-                pnt_timespan_end = (self.launch_time + timedelta(
-                    seconds=next_position_dict[self.time_colname]
-                )).strftime(self.kml_time_format)
-            # Define point style with heading
-            point_style = kml_utils.create_kml_point_style(
-                icon_path='../Icons/missile3.png',
-                icon_scale=0.5,
-                heading=position_dict[self.bearingdeg_colname],
-                )
-            # Add point indicating current location of missile
-            kml_utils.add_kml_point(
-                kml_folder=kml_folder,
-                lat_deg=position_dict[self.latdeg_colname],
-                lon_deg=position_dict[self.londeg_colname],
-                alt_meters=position_dict[self.altm_colname],
-                style=point_style,
-#                    pnt_label=f'Time: {position_dict[self.time_col_name]}',
-                timespan_begin=timespan_begin,
-                timespan_end=pnt_timespan_end,
+            lon_lat_alt_list.append(
+                (self.data.loc[idx, self.londeg_colname],
+                 self.data.loc[idx, self.latdeg_colname],
+                 self.data.loc[idx, self.altm_colname])
             )
-            # Add linestring indicating trajectory over previous timestep
-            if idx != self.data.index.min():
-                prev_position_dict = self.data.loc[idx-1].to_dict()       
-                kml_utils.add_kml_linestring(
-                    kml_folder=kml_folder,
-                    lon_lat_alt_list=[
-                        (prev_position_dict[self.londeg_colname],
-                         prev_position_dict[self.latdeg_colname],
-                         prev_position_dict[self.altm_colname]
-                         ),
-                        (position_dict[self.londeg_colname],
-                         position_dict[self.latdeg_colname],
-                         position_dict[self.altm_colname]
-                         ),
-                    ],
-                    style=simplekml.Style(), #TODO
-                    timespan_begin=timespan_begin,
-                )
-
+            if idx == self.data.index.min():
+                timestamp_list.append(self.sim_start_time)
+            elif idx == self.data.index.max():
+                timestamp_list.append(self.sim_end_time)
+            else:
+                timestamp = (self.launch_time + timedelta(
+                    seconds=self.data.loc[idx][self.time_colname]
+                )).strftime(self.kml_time_format)
+                timestamp_list.append(timestamp)
+        kml_utils.add_kml_track(
+            kml_folder=self.kml,
+            lon_lat_alt_list=lon_lat_alt_list,
+            timestamp_list=timestamp_list,
+            style=track_style,
+            track_label='',
+        )
 
 if __name__ == '__main__':
     kml_test = KMLTrajectorySim(data=data)
     kml_test.create_trajectory()
     kml_test.kml.savekmz('test.kmz')
+
+# =============================================================================
+# Archive
+# =============================================================================
+#    def create_trajectory(self) -> None:
+#        """Create KML points and linestrings tracing missile trajectory."""
+#        for idx in self.data.index:
+#            kml_folder = self.kml.newfolder(name=f'Point {idx}')
+#            position_dict = self.data.loc[idx].to_dict()
+#            # Determine start/end times for points and linestrings
+#            if idx == self.data.index.min():
+#                timespan_begin = self.sim_start_time
+#            else:
+#                timespan_begin = (self.launch_time + timedelta(
+#                    seconds=position_dict[self.time_colname]
+#                )).strftime(self.kml_time_format)
+#            if idx == self.data.index.max():
+#                pnt_timespan_end = self.sim_end_time
+#            else:
+#                next_position_dict = self.data.loc[idx+1].to_dict()
+#                pnt_timespan_end = (self.launch_time + timedelta(
+#                    seconds=next_position_dict[self.time_colname]
+#                )).strftime(self.kml_time_format)
+#            # Define point style with heading
+#            point_style = kml_utils.create_kml_point_style(
+#                icon_path='../Icons/missile3.png',
+#                icon_scale=0.5,
+#                heading=position_dict[self.bearingdeg_colname],
+#                )
+#            # Add point indicating current location of missile
+#            kml_utils.add_kml_point(
+#                kml_folder=kml_folder,
+#                lat_deg=position_dict[self.latdeg_colname],
+#                lon_deg=position_dict[self.londeg_colname],
+#                alt_meters=position_dict[self.altm_colname],
+#                style=point_style,
+##                    pnt_label=f'Time: {position_dict[self.time_col_name]}',
+#                timespan_begin=timespan_begin,
+#                timespan_end=pnt_timespan_end,
+#            )
+#            # Add linestring indicating trajectory over previous timestep
+#            if idx != self.data.index.min():
+#                prev_position_dict = self.data.loc[idx-1].to_dict()       
+#                kml_utils.add_kml_linestring(
+#                    kml_folder=kml_folder,
+#                    lon_lat_alt_list=[
+#                        (prev_position_dict[self.londeg_colname],
+#                         prev_position_dict[self.latdeg_colname],
+#                         prev_position_dict[self.altm_colname]
+#                         ),
+#                        (position_dict[self.londeg_colname],
+#                         position_dict[self.latdeg_colname],
+#                         position_dict[self.altm_colname]
+#                         ),
+#                    ],
+#                    style=simplekml.Style(), #TODO
+#                    timespan_begin=timespan_begin,
+#                )
