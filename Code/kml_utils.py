@@ -1,5 +1,8 @@
 """Utility functions for creating Keyhole Markup Language (KML) files."""
 
+#TODO: add heading, tilt, and roll to GxTrack style
+#TODO: add stylemaps to all style functions
+
 # Import packages
 from typing import List, Tuple
 
@@ -12,11 +15,23 @@ def create_kml_point_style(
     icon_scale: float = 1.0,
     heading: float = 0.0,
 ) -> simplekml.styleselector.Style:
-    """Create a simplekml Style object with specified icon and scale."""
+    """Create a simplekml point Style object with specified icon and scale."""
     style = simplekml.Style()
     style.iconstyle.icon.href = icon_path
     style.iconstyle.scale = icon_scale
     style.iconstyle.heading = heading
+    return style
+
+def create_kml_track_style( 
+    icon_path: str,
+    icon_scale: float = 1.0,
+) -> simplekml.styleselector.Style:
+    """Create a simplekml GxTrack Style object with specified icon and scale."""
+    style = simplekml.Style()
+    style.iconstyle.icon.href = icon_path
+    style.iconstyle.scale = icon_scale
+    style.linestyle.color = simplekml.Color.darkgoldenrod #TODO: add argument
+    style.linestyle.width = 6 #TODO: add argument
     return style
 
 def add_kml_point(
