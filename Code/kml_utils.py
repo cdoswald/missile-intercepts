@@ -90,6 +90,34 @@ def add_kml_linestring(
     linestring.altitudemode = simplekml.AltitudeMode.relativetoground
     return kml_folder
 
+def add_kml_track(
+    kml_folder: simplekml.featgeom.Folder,
+    lon_lat_alt_list: List[Tuple[float, float, float]],
+    timestamp_list: List[str],
+    style: simplekml.styleselector.Style,
+    track_label: str = '',
+) -> simplekml.featgeom.Folder:
+    """Add a simplekml GxTrack object to existing KML folder.
+    
+    Arguments
+        kml_folder: simplekml folder to which to add a new GxTrack object
+        lon_lat_alt_list: list of 3-length tuples indicating longitude (degrees),
+            latitude (degrees), and altitude (meters) for each point in GxTrack;
+            NOTE that longitude precedes latitude in simplekml objects
+        timestamp_list: list of timestamps (in KML format)
+        style: simplekml GxTrack style
+        track_label: string label for GxTrack
+
+    Returns
+        kml_folder: simplekml folder with newly added GxTrack object
+    """
+    track = kml_folder.newgxtrack(name=track_label)
+    track.newwhen(timestamp_list)
+    track.newgxcoord(lon_lat_alt_list)
+    track.style = style
+    track.altitudemode = simplekml.AltitudeMode.relativetoground
+    return track
+    
 def create_kml_polygon():
     """Placeholder for simplekml polygon function."""
     pass
