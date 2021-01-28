@@ -131,8 +131,49 @@ def add_kml_track(
     track.newgxcoord(lon_lat_alt_list)
     track.style = style
     track.altitudemode = simplekml.AltitudeMode.relativetoground
-    return track
+    return kml_folder
+
+def add_kml_model(
+    kml_folder: simplekml.featgeom.Folder,
+    lat_deg: float,
+    lon_deg: float,
+    style: simplekml.styleselector.Style,
+    alt_meters: float = 0,
+    heading_deg: float = 0,
+    tilt_deg: float = 0,
+    roll_deg: float = 0,
+    model_label: str = '',
+    timespan_begin: str = '',
+    timespan_end: str = '',
+) -> simplekml.featgeom.Folder:
+    """Add a simplekml Model object to existing KML folder.
     
+    Arguments
+        kml_folder: simplekml folder to which to add a new Model object
+        lat_deg: point latitude in degrees
+        lon_deg: point longitude in degrees
+        style: simplekml point style
+        alt_meters: point altitude in meters (relative to ground)
+        heading_deg: rotation about the z-axis
+        tilt_deg: rotation about the x-axis
+        roll_deg: rotation about the y-axis
+        model_label: string label for model
+        timespan_begin: string (in KML format) indicating model start time
+        timespan_end: string (in KML format) indicating model end time
+
+    Returns
+        kml_folder: simplekml folder with newly added Model object
+    """
+    model = kml_folder.newmodel(name=model_label)
+    model.location = simplekml.Location(lon_deg, lat_deg, alt_meters)
+    model.orientation = simplekml.Orientation(heading_deg, tilt_deg, roll_deg)
+    model.style = style
+    model.timespan.begin = timespan_begin
+    model.timespan.end = timespan_end
+    model.altitudemode = simplekml.AltitudeMode.relativetoground
+    return kml_folder
+
+
 def create_kml_polygon():
     """Placeholder for simplekml polygon function."""
     pass
