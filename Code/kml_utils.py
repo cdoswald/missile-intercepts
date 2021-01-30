@@ -137,11 +137,15 @@ def add_kml_model(
     kml_folder: simplekml.featgeom.Folder,
     lat_deg: float,
     lon_deg: float,
-    style: simplekml.styleselector.Style,
+#    style: simplekml.styleselector.Style,
+    image_link: str,
     alt_meters: float = 0,
     heading_deg: float = 0,
     tilt_deg: float = 0,
     roll_deg: float = 0,
+    x_scale: float = 1,
+    y_scale: float = 1,
+    z_scale: float = 1,
     model_label: str = '',
     timespan_begin: str = '',
     timespan_end: str = '',
@@ -157,6 +161,9 @@ def add_kml_model(
         heading_deg: rotation about the z-axis
         tilt_deg: rotation about the x-axis
         roll_deg: rotation about the y-axis
+        x_scale: scale of the model along the x axis
+        y_scale: scale of the model along the y axis
+        z_scale: scale of the model along the z axis
         model_label: string label for model
         timespan_begin: string (in KML format) indicating model start time
         timespan_end: string (in KML format) indicating model end time
@@ -167,7 +174,9 @@ def add_kml_model(
     model = kml_folder.newmodel(name=model_label)
     model.location = simplekml.Location(lon_deg, lat_deg, alt_meters)
     model.orientation = simplekml.Orientation(heading_deg, tilt_deg, roll_deg)
-    model.style = style
+    model.scale = simplekml.Scale(x_scale, y_scale, z_scale)
+    model.link = simplekml.Link(href=image_link)
+#    model.style = style
     model.timespan.begin = timespan_begin
     model.timespan.end = timespan_end
     model.altitudemode = simplekml.AltitudeMode.relativetoground
