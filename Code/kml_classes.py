@@ -84,35 +84,29 @@ class KMLTrajectorySim():
         )).strftime(self.kml_time_format)
 
     def create_trajectory(self) -> None:
-        """Create KML GxTrack tracing missile trajectory."""
-        track_style = kml_utils.create_kml_track_style(
-            icon_path='../Icons/missile3.png',
-            icon_scale=0.5,
-        )
-        lon_lat_alt_list = []
-        timestamp_list = []
+        """Create KML model tracing missile trajectory."""
+#        model_style = kml_utils.create_kml_point_style(
+#            icon_path='../Icons/missile3.png',
+#            icon_scale=0.5,
+#        )
         for idx in self.data.index:
-            lon_lat_alt_list.append(
-                (self.data.loc[idx, self.londeg_colname],
-                 self.data.loc[idx, self.latdeg_colname],
-                 self.data.loc[idx, self.altm_colname])
+            timespan_begin = (self.launch_time + timedelta(
+                seconds=self.data.loc[idx][self.time_colname]
+            )).strftime(self.kml_time_format)
+            kml_utils.add_kml_model(
+                kml_folder=self.kml,
+                lat_deg=self.data.loc[idx, self.latdeg_colname],
+                lon_deg=self.data.loc[idx, self.londeg_colname],
+                alt_meters=self.data.loc[idx, self.altm_colname],
+                image_link='../Icons/missile3.png',
+#                style=model_style,
+                heading_deg=self.data.loc[idx, self.bearingdeg_colname],
+                tilt_deg=0,
+                roll_deg=0,
+                timespan_begin=timespan_begin,
+                timespan_end='',
             )
-            if idx == self.data.index.min():
-                timestamp_list.append(self.sim_start_time)
-            elif idx == self.data.index.max():
-                timestamp_list.append(self.sim_end_time)
-            else:
-                timestamp = (self.launch_time + timedelta(
-                    seconds=self.data.loc[idx][self.time_colname]
-                )).strftime(self.kml_time_format)
-                timestamp_list.append(timestamp)
-        kml_utils.add_kml_track(
-            kml_folder=self.kml,
-            lon_lat_alt_list=lon_lat_alt_list,
-            timestamp_list=timestamp_list,
-            style=track_style,
-            track_label='',
-        )
+
 
 if __name__ == '__main__':
     kml_test = KMLTrajectorySim(data=data)
@@ -176,3 +170,34 @@ if __name__ == '__main__':
 #                    style=simplekml.Style(), #TODO
 #                    timespan_begin=timespan_begin,
 #                )
+#    
+#        def create_trajectory(self) -> None:
+#        """Create KML GxTrack tracing missile trajectory."""
+#        track_style = kml_utils.create_kml_track_style(
+#            icon_path='../Icons/missile3.png',
+#            icon_scale=0.5,
+#        )
+#        lon_lat_alt_list = []
+#        timestamp_list = []
+#        for idx in self.data.index:
+#            lon_lat_alt_list.append(
+#                (self.data.loc[idx, self.londeg_colname],
+#                 self.data.loc[idx, self.latdeg_colname],
+#                 self.data.loc[idx, self.altm_colname])
+#            )
+#            if idx == self.data.index.min():
+#                timestamp_list.append(self.sim_start_time)
+#            elif idx == self.data.index.max():
+#                timestamp_list.append(self.sim_end_time)
+#            else:
+#                timestamp = (self.launch_time + timedelta(
+#                    seconds=self.data.loc[idx][self.time_colname]
+#                )).strftime(self.kml_time_format)
+#                timestamp_list.append(timestamp)
+#        kml_utils.add_kml_track(
+#            kml_folder=self.kml,
+#            lon_lat_alt_list=lon_lat_alt_list,
+#            timestamp_list=timestamp_list,
+#            style=track_style,
+#            track_label='',
+#        )
