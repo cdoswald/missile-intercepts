@@ -8,10 +8,10 @@ import sys
 import numpy as np
 
 # Import local modules
-scriptdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-parentdir = os.path.dirname(scriptdir)
-geo_utils_dir = os.path.join(parentdir, 'Code')
-sys.path.insert(0, geo_utils_dir)
+script_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+parent_dir = os.path.dirname(script_dir)
+utils_dir = os.path.join(parent_dir, 'Utils')
+sys.path.insert(0, utils_dir)
 import geo_utils as geo
 
 # Define tests

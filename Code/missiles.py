@@ -11,9 +11,9 @@ import numpy as np
 import pandas as pd
 
 # Import local modules
-scriptdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-parentdir = os.path.dirname(scriptdir)
-sys.path.insert(0, parentdir)
+script_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+utils_dir = os.path.join(script_dir, 'Utils')
+sys.path.insert(0, utils_dir)
 import geo_utils as geo
 
 # Define constants
