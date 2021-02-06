@@ -1,6 +1,5 @@
 """Utility functions for creating Keyhole Markup Language (KML) files."""
 
-#TODO: add heading, tilt, and roll to GxTrack style
 #TODO: add stylemaps to all style functions
 
 # Import packages
@@ -30,8 +29,8 @@ def create_kml_track_style(
     style = simplekml.Style()
     style.iconstyle.icon.href = icon_path
     style.iconstyle.scale = icon_scale
-    style.linestyle.color = simplekml.Color.darkgoldenrod #TODO: add argument
-    style.linestyle.width = 6 #TODO: add argument
+#    style.linestyle.color = simplekml.Color.darkgoldenrod #TODO: add argument
+#    style.linestyle.width = 6 #TODO: add argument
     return style
 
 def add_kml_point(
@@ -137,8 +136,7 @@ def add_kml_model(
     kml_folder: simplekml.featgeom.Folder,
     lat_deg: float,
     lon_deg: float,
-#    style: simplekml.styleselector.Style,
-    image_link: str,
+    collada_model_link: str,
     alt_meters: float = 0,
     heading_deg: float = 0,
     tilt_deg: float = 0,
@@ -156,11 +154,11 @@ def add_kml_model(
         kml_folder: simplekml folder to which to add a new Model object
         lat_deg: point latitude in degrees
         lon_deg: point longitude in degrees
-        style: simplekml point style
+        collada_model_link: path or URL to COLLADA file (.dae) containing model
         alt_meters: point altitude in meters (relative to ground)
         heading_deg: rotation about the z-axis
-        tilt_deg: rotation about the x-axis
-        roll_deg: rotation about the y-axis
+        tilt_deg: rotation about the x-axis (parallel to latitude lines)
+        roll_deg: rotation about the y-axis (parallel to longitude lines)
         x_scale: scale of the model along the x axis
         y_scale: scale of the model along the y axis
         z_scale: scale of the model along the z axis
@@ -175,8 +173,7 @@ def add_kml_model(
     model.location = simplekml.Location(lon_deg, lat_deg, alt_meters)
     model.orientation = simplekml.Orientation(heading_deg, tilt_deg, roll_deg)
     model.scale = simplekml.Scale(x_scale, y_scale, z_scale)
-    model.link = simplekml.Link(href=image_link)
-#    model.style = style
+    model.link = simplekml.Link(href=collada_model_link)
     model.timespan.begin = timespan_begin
     model.timespan.end = timespan_end
     model.altitudemode = simplekml.AltitudeMode.relativetoground
