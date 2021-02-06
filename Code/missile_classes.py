@@ -80,10 +80,7 @@ class BallisticMissile():
         self.set_initial_launch_velocity()
         self.set_initial_launch_angle()
 
-    def launch(
-        self,
-        timestep_sec: float = 1,
-    ) -> None:
+    def launch(self, timestep_sec: float = 1) -> None:
         """Record missile position (latitude, longitude, altitude, bearing)
         for each timestep from launch until impact.
         
@@ -102,6 +99,7 @@ class BallisticMissile():
                 'lon_deg':self.current_latlon_deg[1],
                 'alt_km':self.current_altitude_km,
                 'bearing_deg':self.current_bearing_deg,
+                'tilt_deg':self.current_tilt_deg,
             }
         self.trajectory_dict = trajectory_dict
     
@@ -109,8 +107,9 @@ class BallisticMissile():
         self,
         elapsed_time_sec: float,
     ) -> None:
-        """Update latitude, longitude, and altitude based on elapsed time.
-        
+        """Update latitude, longitude, altitude, bearing (heading), and tilt
+        based on elapsed time.
+
         Arguments
             elapsed_time_sec: Elapsed time since launch (in seconds)
         """
@@ -127,10 +126,17 @@ class BallisticMissile():
             self.initial_vert_vel_km_per_sec * elapsed_time_sec
             + (0.5 * GRAVITY_ACCEL_KM_PER_S2 * elapsed_time_sec**2)
         )
-        # Bearing (from current position, not from launchpoint)
+        # Bearing/heading from current position
         self.current_bearing_deg = self.compute_current_bearing(
             position_lat_deg=self.current_latlon_deg[0],
             position_lon_deg=self.current_latlon_deg[1],
+        )
+        # Tilt from current position
+        self.current_tilt_deg = geo.rad_to_deg(
+            np.arctan2(
+                self.compute_current_vertical_velocity(elapsed_time_sec),
+                self.horiz_vel_km_per_sec
+            )
         )
 
     def set_launchpoint(
