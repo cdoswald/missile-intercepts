@@ -1,8 +1,7 @@
-"""KMLTrajectory and KMLCamera classes."""
+"""KMLTrajectorySim and KMLCamera classes."""
 
 #TODO: Define styles (possibly in utils)
 #TODO: Add stylemap (in utils)
-#TODO: Check hemisphere coordinates
 #TODO: Add save KMZ functions to utils
 #TODO: Add camera classes
 #TODO: Add converter classes?
@@ -24,9 +23,6 @@ utils_dir = os.path.join(script_dir, 'Utils')
 sys.path.insert(0, utils_dir)
 import kml_utils
 
-# Define constants
-EARTH_RADIUS_KM = 6378
-
 # Define classes
 class KMLTrajectorySim():
     """Base class for simulating a missile trajectory in KML."""
@@ -40,6 +36,7 @@ class KMLTrajectorySim():
         londeg_colname: str = 'lon_deg',
         altm_colname: str = 'alt_m',
         bearingdeg_colname: str = 'bearing_deg',
+        tiltdeg_colname: str = 'tilt_deg',
         kml_time_format: str = '%Y-%m-%dT%H:%M:%SZ',
     ) -> None:
         """Instantiate KMLTrajectorySim class.
@@ -52,6 +49,7 @@ class KMLTrajectorySim():
             londeg_colname: name of longitude (degrees) column in data
             altm_colname: name of altitude (meters) column in data
             bearingdeg_colname: name of bearing (degrees) column in data
+            tiltdeg_colname: name of tilt (degrees) column in data
             kml_time_format: string format for KML timestamps/timespans
         """
         self.data = data.sort_values([time_colname]).reset_index(drop=True)
@@ -61,6 +59,7 @@ class KMLTrajectorySim():
         self.londeg_colname = londeg_colname
         self.altm_colname = altm_colname
         self.bearingdeg_colname = bearingdeg_colname
+        self.tiltdeg_colname = tiltdeg_colname
         self.kml_time_format = kml_time_format
         self.kml = simplekml.Kml()
         self.set_sim_start_end_times()
@@ -84,33 +83,64 @@ class KMLTrajectorySim():
         )).strftime(self.kml_time_format)
 
     def create_trajectory(self) -> None:
-        """Create KML model tracing missile trajectory."""
-#        model_style = kml_utils.create_kml_point_style(
-#            icon_path='../Icons/missile3.png',
-#            icon_scale=0.5,
-#        )
+        """Create KML model and linestring objects tracing missile trajectory."""
         for idx in self.data.index:
-            timespan_begin = (self.launch_time + timedelta(
-                seconds=self.data.loc[idx][self.time_colname]
-            )).strftime(self.kml_time_format)
+            kml_folder = self.kml.newfolder(name=f'Location {idx}')
+            position_dict = self.data.loc[idx].to_dict()
+            # Determine start/end times for models and linestrings
+            if idx == self.data.index.min():
+                timespan_begin = self.sim_start_time
+            else:
+                timespan_begin = (self.launch_time + timedelta(
+                    seconds=position_dict[self.time_colname]
+                )).strftime(self.kml_time_format)
+            if idx == self.data.index.max():
+                timespan_end = self.sim_end_time
+            else:
+                next_position_dict = self.data.loc[idx+1].to_dict()
+                timespan_end = (self.launch_time + timedelta(
+                    seconds=next_position_dict[self.time_colname]
+                )).strftime(self.kml_time_format)
+            # Add 3D model
             kml_utils.add_kml_model(
-                kml_folder=self.kml,
-                lat_deg=self.data.loc[idx, self.latdeg_colname],
-                lon_deg=self.data.loc[idx, self.londeg_colname],
-                alt_meters=self.data.loc[idx, self.altm_colname],
-                image_link='../Icons/missile3.png',
-#                style=model_style,
-                heading_deg=self.data.loc[idx, self.bearingdeg_colname],
-                tilt_deg=0,
-                roll_deg=0,
+                kml_folder=kml_folder,
+                lat_deg=position_dict[self.latdeg_colname],
+                lon_deg=position_dict[self.londeg_colname],
+                alt_meters=position_dict[self.altm_colname],
+                collada_model_link='../Icons/test_collada.dae',
+                heading_deg=position_dict[self.bearingdeg_colname], # Rotation about the Z-axis 
+                tilt_deg=position_dict[self.tiltdeg_colname], # X-axis (parallel to latitude)
+                roll_deg=0, # Y-axis (parallel to longitude)
+                x_scale=100,
+                y_scale=100,
+                z_scale=100,
                 timespan_begin=timespan_begin,
-                timespan_end='',
+                timespan_end=timespan_end,
             )
+            # Add linestring indicating trajectory over previous timestep
+            if idx != self.data.index.min():
+                prev_position_dict = self.data.loc[idx-1].to_dict()       
+                kml_utils.add_kml_linestring(
+                    kml_folder=kml_folder,
+                    lon_lat_alt_list=[
+                        (prev_position_dict[self.londeg_colname],
+                         prev_position_dict[self.latdeg_colname],
+                         prev_position_dict[self.altm_colname]
+                         ),
+                        (position_dict[self.londeg_colname],
+                         position_dict[self.latdeg_colname],
+                         position_dict[self.altm_colname]
+                         ),
+                    ],
+                    style=simplekml.Style(), #TODO
+                    timespan_begin=timespan_begin,
+                )
 
 
 if __name__ == '__main__':
     kml_test = KMLTrajectorySim(data=data)
     kml_test.create_trajectory()
+    kml_test.kml.addfile(os.path.join(os.getcwd(), '../Icons/test_collada.dae'))
     kml_test.kml.savekmz('test.kmz')
 
 # =============================================================================
