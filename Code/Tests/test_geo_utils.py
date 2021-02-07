@@ -15,37 +15,38 @@ sys.path.insert(0, utils_dir)
 import geo_utils as geo
 
 # Define tests
-def test_polar_angle_to_bearing():
-    """Test that polar_angle_to_bearing function correctly converts polar angle 
-    (measured counterclockwise from East) to bearing (measured clockwise from North).
+def test_convert_trig_to_compass_angle():
+    """Test that convert_trig_to_compass_angle function correctly converts 
+    trigonometric angle (measured counterclockwise from East) to compass angle
+    (measured clockwise from North).
     """
     conversions_dict = {
         'degrees':[
-            {'polar_angle':0, 'bearing':90},
-            {'polar_angle':90, 'bearing':0},
-            {'polar_angle':180, 'bearing':270},
-            {'polar_angle':270, 'bearing':180},
-            {'polar_angle':360, 'bearing':90},
+            {'trig_angle':0, 'compass_angle':90},
+            {'trig_angle':90, 'compass_angle':0},
+            {'trig_angle':180, 'compass_angle':270},
+            {'trig_angle':270, 'compass_angle':180},
+            {'trig_angle':360, 'compass_angle':90},
         ],
         'radians':[
-            {'polar_angle':0, 'bearing':(np.pi/2)},
-            {'polar_angle':(np.pi/2), 'bearing':0},
-            {'polar_angle':(np.pi), 'bearing':(3/2*np.pi)},
-            {'polar_angle':(3/2*np.pi), 'bearing':(np.pi)},
-            {'polar_angle':(2*np.pi), 'bearing':(np.pi/2)},
+            {'trig_angle':0, 'compass_angle':(np.pi/2)},
+            {'trig_angle':(np.pi/2), 'compass_angle':0},
+            {'trig_angle':(np.pi), 'compass_angle':(3/2*np.pi)},
+            {'trig_angle':(3/2*np.pi), 'compass_angle':(np.pi)},
+            {'trig_angle':(2*np.pi), 'compass_angle':(np.pi/2)},
         ]
     }
     errors_list = []
     for unit, conversions_list in conversions_dict.items():
         radians_bool = (unit == 'radians')
         for conversion_dict in conversions_list:
-            converted_val = geo.polar_angle_to_bearing(
-                polar_angle=conversion_dict['polar_angle'],
+            converted_val = geo.convert_trig_to_compass_angle(
+                trig_angle=conversion_dict['trig_angle'],
                 radians=radians_bool
             )
-            if converted_val != conversion_dict['bearing']:
+            if converted_val != conversion_dict['compass_angle']:
                 errors_list.append('Incorrect conversion for '+
-                    f'{conversion_dict["polar_angle"]} {unit}.'
+                    f'{conversion_dict["trig_angle"]} {unit}.'
                 )
     assert not errors_list, 'Errors occurred: \n{}'.format('\n'.join(errors_list))
 
@@ -99,5 +100,5 @@ def test_calculate_great_circle_distance():
     assert not errors_list, 'Errors occurred: \n{}'.format('\n'.join(errors_list))
 
 if __name__ == '__main__':
-    test_polar_angle_to_bearing()
+    test_convert_trig_to_compass_angle()
     test_calculate_great_circle_distance()
