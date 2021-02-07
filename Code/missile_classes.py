@@ -8,18 +8,15 @@ import sys
 from typing import Optional
 
 import numpy as np
-import pandas as pd
 
 # Import local modules
 script_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-utils_dir = os.path.join(script_dir, 'Utils')
-sys.path.insert(0, utils_dir)
+sys.path.insert(0, os.path.join(script_dir, 'Utils'))
 import geo_utils as geo
 
 # Define constants
 EARTH_RADIUS_KM = 6378
 EARTH_MASS_KG = 5.9722 * (10**24)
-
 GRAVITY_ACCEL_KM_PER_S2 = (-0.0098)
 GRAV_CONSTANT_M3_PER_KG_S2 = 6.673 * (10**-11)
 EARTH_STD_GRAV_PARAM_M3_PER_S2 = GRAV_CONSTANT_M3_PER_KG_S2 * EARTH_MASS_KG
@@ -38,8 +35,6 @@ class BallisticMissile():
         aimpoint_lat_deg: Optional[float] = None,
         aimpoint_lon_deg: Optional[float] = None,
         time_to_target_sec: Optional[float] = None,
-#        launch_angle_deg: Optional[float] = None,
-#        launch_velo_km_per_sec: Optional[float] = None,
     ) -> None:
         """Instantiate BallisticMissile class.
         
@@ -56,8 +51,6 @@ class BallisticMissile():
         self.launch_latlon_deg = [launch_lat_deg, launch_lon_deg]
         self.aimpoint_latlon_deg = [aimpoint_lat_deg, aimpoint_lon_deg]
         self.time_to_target_sec = time_to_target_sec
-#        self.launch_angle_rad = geo.deg_to_rad(launch_angle_deg)
-#        self.launch_velo_km_per_sec = launch_velo_km_per_sec
 
     def build(self) -> None:
         """Set all initial launch parameters for missile."""
@@ -126,16 +119,18 @@ class BallisticMissile():
             self.initial_vert_vel_km_per_sec * elapsed_time_sec
             + (0.5 * GRAVITY_ACCEL_KM_PER_S2 * elapsed_time_sec**2)
         )
-        # Bearing/heading from current position
+        # Bearing/heading (from current position)
         self.current_bearing_deg = self.compute_current_bearing(
             position_lat_deg=self.current_latlon_deg[0],
             position_lon_deg=self.current_latlon_deg[1],
         )
-        # Tilt from current position
+        # Tilt (from current position)
         self.current_tilt_deg = geo.rad_to_deg(
-            np.arctan2(
-                self.compute_current_vertical_velocity(elapsed_time_sec),
-                self.horiz_vel_km_per_sec
+            geo.convert_trig_to_compass_angle(
+                np.arctan2(
+                    self.compute_current_vertical_velocity(elapsed_time_sec),
+                    self.horiz_vel_km_per_sec
+                )
             )
         )
 
@@ -286,10 +281,7 @@ class BallisticMissile():
             )
         return current_bearing_deg
         
-    def compute_current_vertical_velocity(
-        self,
-        elapsed_time_sec: float,
-    ) -> float:
+    def compute_current_vertical_velocity(self, elapsed_time_sec: float) -> float:
         """Compute vertical velocity (km/s) given elapsed time in seconds.
         
         Arguments
@@ -309,48 +301,3 @@ class BallisticMissile():
                 + GRAVITY_ACCEL_KM_PER_S2 * elapsed_time_sec
             )
             return current_vert_vel_km_per_sec
-
-
-if __name__ == '__main__':
-    test_missile = BallisticMissile()
-    test_missile.set_launchpoint(39.7392, -104.9903)
-    test_missile.set_aimpoint(41.1400, -104.8202)
-    test_missile.set_time_to_target(150)
-    test_missile.build()        
-    test_missile.__dict__
-    test_missile.launch()
-    data = pd.DataFrame.from_dict(test_missile.trajectory_dict, orient='index')
-    data = data.reset_index().rename(columns={'index':'time_sec'})
-    data['alt_m'] = geo.km_to_meters(data['alt_km'])
-    del data['alt_km']
-# =============================================================================
-# Archive
-# =============================================================================
-#def compute_max_altitude(
-#    launch_velocity_km_per_sec: float,
-#    launch_angle_deg: float
-#) -> Union[None, float]:
-#    """Calculate maximum altitude of ballistic trajectory given initial launch velocity
-#    in km/s and launch angle in degrees. Source: https://mae.ufl.edu/~uhk/ICBM.pdf.
-#    """
-#    alpha = 2 * GRAVITY_ACCEL_KM_PER_S2 * EARTH_RADIUS_KM / launch_velocity_km_per_sec**2
-#    beta = geo.degrees_to_radians(launch_angle_deg)
-#    b2_minus_4ac = (alpha**2) - (4 * (1 - alpha) * (-1 * np.cos(beta)**2))
-#    y_solution = -1 + (((-1 * alpha) - np.sqrt(b2_minus_4ac)) / (2 * (1 - alpha)))
-#    max_alt_km = y_solution * EARTH_RADIUS_KM
-#    return max_alt_km
-#
-#compute_max_altitude(
-#    launch_velocity_km_per_sec=EARTH_ESCAPE_VELOCITY,
-#    launch_angle_deg=90,
-#)
-#
-#compute_max_altitude(
-#    launch_velocity_km_per_sec=5.593,
-#    launch_angle_deg=30,
-#)
-#
-#compute_max_altitude(
-#    launch_velocity_km_per_sec=EARTH_ESCAPE_VELOCITY,
-#    launch_angle_deg=0,
-#)
