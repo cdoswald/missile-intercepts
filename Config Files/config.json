@@ -1,0 +1,19 @@
+{"Missile1":
+	{"launchpoint_latlon":[39.7392, -104.9903],
+	 "aimpoint_latlon":[41.1400, -104.8202],
+	 "time_to_target_sec":240,
+	 "COLLADA_model_link":"../COLLADA/test_collada.dae",
+	 "COLLADA_model_scale":200,
+	 "intercepted":"True",
+	 "intercepted_dist_km":20
+	},
+ "Missile2":
+	{"launchpoint_latlon":[39.8392, -104.8903],
+	 "aimpoint_latlon":[41.2400, -104.9202],
+	 "time_to_target_sec":180,
+	 "COLLADA_model_link":"../COLLADA/test_collada.dae",
+	 "COLLADA_model_scale":200,
+	 "intercepted":"True",
+	 "intercepted_dist_km":5
+	}
+}
