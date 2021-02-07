@@ -1,5 +1,4 @@
 """Utility functions for geodetic calculations."""
-# TODO: Add tests for distance/bearing/destination formulas
 
 # Import packages
 from typing import List, Tuple
@@ -29,22 +28,23 @@ def rad_to_deg(radians: float) -> float:
     """Converts angle in radians to degrees."""
     return radians * 180 / np.pi
 
-def polar_angle_to_bearing(polar_angle: float, radians: bool = True):
+def convert_trig_to_compass_angle(trig_angle: float, radians: bool = True):
     """Converts a trigonometric angle (measured counterclockwise from East) 
-    to bearing (measured clockwise from North). 
+    to compass angle (measured clockwise from North). Angle returned is in 
+    original units (e.g., radians are returned if polar_angle is given in radians).
     
     Arguments
-        polar_angle: float value of angle measured counterclockwise from East
-        radians: bool value indicating angle is given in radians; set = False for degrees
+        trig_angle: angle measured counterclockwise from East
+        radians: indicates that angle is given in radians (False=degrees)
         
     Returns
-        bearing: float value of angle measured clockwise from North
+        compass_angle: angle measured clockwise from North
     """
     if radians:
-        bearing = ((np.pi / 2) - polar_angle) % (2 * np.pi)
+        compass_angle = ((np.pi / 2) - trig_angle) % (2 * np.pi)
     else:
-        bearing = (90 - polar_angle) % 360
-    return bearing
+        compass_angle = (90 - trig_angle) % 360
+    return compass_angle
 
 def calculate_great_circle_distance(
     origin_lat_deg: float, origin_lon_deg: float,
@@ -170,7 +170,7 @@ def determine_square_coords(
     dist_origin_to_corner_meters = np.sqrt(2 * (side_length_meters/2)**2)
     angle_rad_list = [(((n*2+1)/4)*np.pi + rotation_radians) for n in np.arange(4)]
     for angle_rad in angle_rad_list:
-        bearing_rad = polar_angle_to_bearing(angle_rad, radians=True)
+        bearing_rad = convert_trig_to_compass_angle(angle_rad, radians=True)
         latlon_list = determine_destination_coords(
             origin_lat_deg=origin_lat_deg,
             origin_lon_deg=origin_lon_deg,
