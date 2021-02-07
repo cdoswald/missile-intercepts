@@ -1,14 +1,37 @@
 """Utility functions for creating Keyhole Markup Language (KML) files."""
-
 #TODO: add stylemaps to all style functions
 
 # Import packages
-from typing import List, Tuple
+import os
+from typing import List, Optional, Tuple
 
-import pykml
 import simplekml
 
 # Define functions
+def save_kmz(
+    kml: simplekml.kml.Kml,
+    output_dir: str,
+    output_file_name: str,
+    attachment_dir: Optional[str] = None,
+    attachment_files_list: Optional[List[str]] = None,
+    attachment_suffix_list: Optional[List[str]] = None,
+) -> None:
+    """Save simplekml KML with attachments in zipped .kmz file format. If 
+    attachment directory is provided, a list of attachment file names or 
+    suffixes must also be provided to include the attachments in the .kmz file.
+    """
+    if attachment_dir is not None and attachment_files_list:
+        for file in attachment_files_list:
+            kml.addfile(os.path.join(attachment_dir, file))
+    elif attachment_dir is not None and attachment_suffix_list:
+        for file in os.listdir(attachment_dir):
+            file_suffix = file.split('.', expand=True)[-1]
+            if file_suffix in attachment_suffix_list:
+                kml.addfile(os.path.join(attachment_dir, file))
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    kml.savekmz(os.path.join(output_dir, f'{output_file_name}.kmz'))
+    
 def create_kml_point_style(
     icon_path: str,
     icon_scale: float = 1.0,
@@ -21,16 +44,28 @@ def create_kml_point_style(
     style.iconstyle.heading = heading
     return style
 
+def create_kml_linestring_style(
+    color: str,
+    width: float = 1,
+) -> simplekml.styleselector.Style:
+    """Create a simplekml linestring Style object with specified color and width."""
+    style = simplekml.Style()
+    style.linestyle.color = color
+    style.linestyle.width = width
+    return style
+
 def create_kml_track_style( 
     icon_path: str,
+    linestring_color: str,
     icon_scale: float = 1.0,
+    linestring_width: float = 1.0,
 ) -> simplekml.styleselector.Style:
-    """Create a simplekml GxTrack Style object with specified icon and scale."""
+    """Create a simplekml GxTrack Style object with specified icon and linestring."""
     style = simplekml.Style()
     style.iconstyle.icon.href = icon_path
     style.iconstyle.scale = icon_scale
-#    style.linestyle.color = simplekml.Color.darkgoldenrod #TODO: add argument
-#    style.linestyle.width = 6 #TODO: add argument
+    style.linestyle.color = linestring_color
+    style.linestyle.width = linestring_width
     return style
 
 def add_kml_point(
@@ -178,7 +213,6 @@ def add_kml_model(
     model.timespan.end = timespan_end
     model.altitudemode = simplekml.AltitudeMode.relativetoground
     return kml_folder
-
 
 def create_kml_polygon():
     """Placeholder for simplekml polygon function."""
