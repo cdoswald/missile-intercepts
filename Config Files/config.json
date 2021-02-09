@@ -5,6 +5,8 @@
 	 "COLLADA_model_link":"../COLLADA/test_collada.dae",
 	 "COLLADA_model_scale":200,
 	 "intercepted":"True",
+	 "interceptor_type":"PAC-3",
+	 "intercepted_max_range":"False",
 	 "intercepted_dist_km":20
 	},
  "Missile2":
@@ -15,5 +17,14 @@
 	 "COLLADA_model_scale":200,
 	 "intercepted":"True",
 	 "intercepted_dist_km":5
+	},
+ "Missile3":
+	{"launchpoint_latlon":[39.4392, -104.2903],
+	 "aimpoint_latlon":[41.2400, -104.9202],
+	 "time_to_target_sec":320,
+	 "COLLADA_model_link":"../COLLADA/test_collada.dae",
+	 "COLLADA_model_scale":200,
+	 "intercepted":"True",
+	 "intercepted_dist_km":15
 	}
 }
