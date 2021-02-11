@@ -6,15 +6,12 @@ import json
 import os
 import sys
 
-import pandas as pd
-
 # Import local modules
 from missile_classes import BallisticMissile
 from kml_classes import KMLTrajectorySim
 
 script_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 sys.path.insert(0, os.path.join(script_dir, 'Utils'))
-import geo_utils as geo
 import kml_utils
 
 # Define functions
@@ -33,13 +30,9 @@ def main(config_path: str) -> None:
             )
         ballistic_missile.build()
         ballistic_missile.launch()
-        # TODO: add converter class from BallisticMissile output to KMLTrajectorySim input
-        data = pd.DataFrame.from_dict(ballistic_missile.trajectory_dict, orient='index')
-        data = data.reset_index().rename(columns={'index':'time_sec'})
-        data['alt_m'] = geo.km_to_meters(data['alt_km'])
         # Create ballistic missile KML trajectory
         ballistic_missile_traj = KMLTrajectorySim(
-            data=data,
+            data=ballistic_missile.trajectory_data,
             collada_model_link=params['COLLADA_model_link'],
             collada_model_scale=params['COLLADA_model_scale'],
         )

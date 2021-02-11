@@ -6,7 +6,7 @@ import os
 from typing import List, Optional, Tuple
 
 import simplekml
-
+        
 # Define functions
 def save_kmz(
     kml: simplekml.kml.Kml,

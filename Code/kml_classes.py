@@ -17,6 +17,7 @@ import simplekml
 # Import local modules
 script_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 sys.path.insert(0, os.path.join(script_dir, 'Utils'))
+import geo_utils as geo
 import kml_utils
 
 # Define classes
@@ -32,7 +33,7 @@ class KMLTrajectorySim():
         time_colname: str = 'time_sec',
         latdeg_colname: str = 'lat_deg',
         londeg_colname: str = 'lon_deg',
-        altm_colname: str = 'alt_m',
+        altkm_colname: str = 'alt_km',
         bearingdeg_colname: str = 'bearing_deg',
         tiltdeg_colname: str = 'tilt_deg',
         kml_time_format: str = '%Y-%m-%dT%H:%M:%SZ',
@@ -47,7 +48,7 @@ class KMLTrajectorySim():
             time_colname: name of time (seconds) column in data
             latdeg_colname: name of latitude (degrees) column in data
             londeg_colname: name of longitude (degrees) column in data
-            altm_colname: name of altitude (meters) column in data
+            altkm_colname: name of altitude (kilometers) column in data
             bearingdeg_colname: name of bearing (degrees) column in data
             tiltdeg_colname: name of tilt (degrees) column in data
             kml_time_format: string format for KML timestamps/timespans
@@ -59,7 +60,7 @@ class KMLTrajectorySim():
         self.time_colname = time_colname
         self.latdeg_colname = latdeg_colname
         self.londeg_colname = londeg_colname
-        self.altm_colname = altm_colname
+        self.altkm_colname = altkm_colname
         self.bearingdeg_colname = bearingdeg_colname
         self.tiltdeg_colname = tiltdeg_colname
         self.kml_time_format = kml_time_format
@@ -113,7 +114,7 @@ class KMLTrajectorySim():
                 kml_folder=kml_folder,
                 lat_deg=position_dict[self.latdeg_colname],
                 lon_deg=position_dict[self.londeg_colname],
-                alt_meters=position_dict[self.altm_colname],
+                alt_meters=geo.km_to_meters(position_dict[self.altkm_colname]),
                 collada_model_link=self.model_link,
                 heading_deg=position_dict[self.bearingdeg_colname],
                 tilt_deg=position_dict[self.tiltdeg_colname],
@@ -132,13 +133,14 @@ class KMLTrajectorySim():
                     lon_lat_alt_list=[
                         (prev_position_dict[self.londeg_colname],
                          prev_position_dict[self.latdeg_colname],
-                         prev_position_dict[self.altm_colname]
+                         geo.km_to_meters(prev_position_dict[self.altkm_colname])
                          ),
                         (position_dict[self.londeg_colname],
                          position_dict[self.latdeg_colname],
-                         position_dict[self.altm_colname]
+                         geo.km_to_meters(position_dict[self.altkm_colname])
                          ),
                     ],
                     style=linestring_style,
                     timespan_begin=timespan_begin,
+                    #TODO: add timespan end as 10 seconds after impact
                 )

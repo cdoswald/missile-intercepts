@@ -1,6 +1,7 @@
 """BallisticMissile and InterceptorMissile classes."""
 
 # Import packages
+from abc import ABC
 from collections import OrderedDict
 import inspect
 import os
@@ -8,6 +9,7 @@ import sys
 from typing import Optional
 
 import numpy as np
+import pandas as pd
 
 # Import local modules
 script_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
@@ -94,8 +96,12 @@ class BallisticMissile():
                 'bearing_deg':self.current_bearing_deg,
                 'tilt_deg':self.current_tilt_deg,
             }
-        self.trajectory_dict = trajectory_dict
-    
+        self.trajectory_data = (
+            pd.DataFrame.from_dict(trajectory_dict, orient='index')
+            .reset_index()
+            .rename(columns={'index':'time_sec'})
+        )
+
     def update_current_position(
         self,
         elapsed_time_sec: float,
