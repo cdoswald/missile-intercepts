@@ -1,7 +1,7 @@
 """BallisticMissile and InterceptorMissile classes."""
 
 # Import packages
-from abc import ABC
+from abc import ABC, abstractmethod
 from collections import OrderedDict
 import inspect
 import os
@@ -27,7 +27,112 @@ EARTH_ESCAPE_VELOCITY_KM_PER_S = (
 )
 
 # Define classes
-class BallisticMissile():
+class Missile(ABC):
+    """Template for all missile classes."""
+    
+    def __init__(
+        self,
+        launch_lat_deg: Optional[float] = None,
+        launch_lon_deg: Optional[float] = None,
+    ) -> None:
+        """Instantiate missile with launchpoint latitude and longitude.
+        
+        Arguments
+            launch_lat_deg: Launchpoint latitude in degrees
+            launch_lon_deg: Launchpoint longitude in degrees
+        """
+        self.launch_latlon_deg = [launch_lat_deg, launch_lon_deg]
+    
+    @abstractmethod
+    def build(self) -> None:
+        """Set all initial launch parameters for missile."""
+    
+    @abstractmethod
+    def launch(self, timestep_sec: float = 1) -> None:
+        """Record missile position (latitude, longitude, altitude, bearing, tilt)
+        for each timestep from launch until impact."""
+
+    @abstractmethod
+    def update_current_position(self, elapsed_time_sec: float) -> None:
+        """Update latitude, longitude, altitude, bearing (heading), and tilt
+        based on elapsed time."""
+
+    @abstractmethod
+    def set_aimpoint(self) -> None:
+        """Set aimpoint latitude and longitude."""
+    
+    @abstractmethod
+    def set_horizontal_velocity(self) -> None:
+        """Compute and set horizontal velocity (km/sec)."""
+
+    @abstractmethod
+    def set_initial_launch_velocity(self) -> None:
+        """Compute and set initial launch velocity (km/sec)."""
+
+    @abstractmethod
+    def set_initial_launch_angle(self) -> None:
+        """Compute and set initial launch angle (degrees)."""
+
+    def set_launchpoint(
+        self,
+        launch_lat_deg: float,
+        launch_lon_deg: float,
+    ) -> None:
+        """Set launchpoint latitude and longitude after instantiation.
+        
+        Arguments
+            launch_lat_deg: Launchpoint latitude in degrees
+            launch_lon_deg: Launchpoint longitude in degrees
+        """
+        self.launch_latlon_deg = [launch_lat_deg, launch_lon_deg]
+
+    def set_distance_to_target(self) -> None:
+        """Compute and set great-circle distance (in km) between launchpoint 
+        and aimpoint."""
+        if not self.launch_latlon_deg or None in self.launch_latlon_deg:
+            print('Launchpoint coordinates not set. Distance could not be calculated.')
+        elif not self.aimpoint_latlon_deg or None in self.aimpoint_latlon_deg:
+            print('Aimpoint coordinates not set. Distance could not be calculated.')
+        else:
+            self.dist_to_target_km = geo.calculate_great_circle_distance(
+                origin_lat_deg=self.launch_latlon_deg[0],
+                origin_lon_deg=self.launch_latlon_deg[1],
+                dest_lat_deg=self.aimpoint_latlon_deg[0],
+                dest_lon_deg=self.aimpoint_latlon_deg[1],
+            )
+
+    def set_launchpoint_bearing(self) -> None:
+        """Compute and set forward azimuth/initial bearing from launchpoint
+        to aimpoint. Bearing measured in degrees, clockwise from North."""
+        if not self.launch_latlon_deg or None in self.launch_latlon_deg:
+            print('Launchpoint coordinates not set. Bearing could not be calculated.')
+        elif not self.aimpoint_latlon_deg or None in self.aimpoint_latlon_deg:
+            print('Aimpoint coordinates not set. Bearing could not be calculated.')
+        else:
+            self.launchpoint_initial_bearing_deg = geo.calculate_initial_bearing(
+                origin_lat_deg=self.launch_latlon_deg[0],
+                origin_lon_deg=self.launch_latlon_deg[1],
+                dest_lat_deg=self.aimpoint_latlon_deg[0],
+                dest_lon_deg=self.aimpoint_latlon_deg[1],
+            )
+
+    def compute_current_bearing(
+        self,
+        position_lat_deg: float,
+        position_lon_deg: float,
+    ) -> float:
+        """Compute forward azimuth/initial bearing from current location to 
+        aimpoint. Bearing measured in degrees, clockwise from North."""
+        current_bearing_deg = geo.calculate_initial_bearing(
+            origin_lat_deg=position_lat_deg,
+            origin_lon_deg=position_lon_deg,
+            dest_lat_deg=self.aimpoint_latlon_deg[0],
+            dest_lon_deg=self.aimpoint_latlon_deg[1],
+            )
+        return current_bearing_deg
+
+
+class BallisticMissile(Missile):
     """Base class for missiles with ballistic trajectories.
     
     Attributes
@@ -96,10 +201,8 @@ class BallisticMissile():
             aimpoint_lon_deg: Aimpoint longitude in degrees
             time_to_target_sec: Total time (in seconds) for missile to travel
                 from launchpoint to aimpoint
-            launch_angle_deg: Initial launch angle in degrees
-            launch_velo_km_per_sec: Initial launch velocity in km/second
         """
-        self.launch_latlon_deg = [launch_lat_deg, launch_lon_deg]
+        super(BallisticMissile, self).__init__(launch_lat_deg, launch_lon_deg)
         self.aimpoint_latlon_deg = [aimpoint_lat_deg, aimpoint_lon_deg]
         self.time_to_target_sec = time_to_target_sec
 
@@ -156,10 +259,10 @@ class BallisticMissile():
         elapsed_time_sec: float,
     ) -> None:
         """Update latitude, longitude, altitude, bearing (heading), and tilt
-        based on elapsed time.
+        of current position based on elapsed time.
 
         Arguments
-            elapsed_time_sec: Elapsed time since launch (in seconds)
+            elapsed_time_sec: elapsed time since launch (in seconds)
         """
         # Latitude/longitude
         dist_traveled_km = self.horiz_vel_km_per_sec * elapsed_time_sec
@@ -189,19 +292,6 @@ class BallisticMissile():
             )
         )
 
-    def set_launchpoint(
-        self,
-        launch_lat_deg: float,
-        launch_lon_deg: float,
-    ) -> None:
-        """Set launchpoint latitude and longitude after instantiation.
-        
-        Arguments
-            launch_lat_deg: Launchpoint latitude in degrees
-            launch_lon_deg: Launchpoint longitude in degrees
-        """
-        self.launch_latlon_deg = [launch_lat_deg, launch_lon_deg]
-
     def set_aimpoint(
         self,
         aimpoint_lat_deg: float,
@@ -226,36 +316,6 @@ class BallisticMissile():
                 from launchpoint to aimpoint
         """
         self.time_to_target_sec = time_to_target_sec
-
-    def set_distance_to_target(self) -> None:
-        """Compute and set great-circle distance (in km) between 
-        launchpoint and aimpoint."""
-        if not self.launch_latlon_deg or None in self.launch_latlon_deg:
-            print('Launchpoint coordinates not set. Distance could not be calculated.')
-        elif not self.aimpoint_latlon_deg or None in self.aimpoint_latlon_deg:
-            print('Aimpoint coordinates not set. Distance could not be calculated.')
-        else:
-            self.dist_to_target_km = geo.calculate_great_circle_distance(
-                origin_lat_deg=self.launch_latlon_deg[0],
-                origin_lon_deg=self.launch_latlon_deg[1],
-                dest_lat_deg=self.aimpoint_latlon_deg[0],
-                dest_lon_deg=self.aimpoint_latlon_deg[1],
-            )
-
-    def set_launchpoint_bearing(self) -> None:
-        """Compute and set forward azimuth/initial bearing from launchpoint
-        to aimpoint. Bearing measured in degrees, clockwise from North."""
-        if not self.launch_latlon_deg or None in self.launch_latlon_deg:
-            print('Launchpoint coordinates not set. Bearing could not be calculated.')
-        elif not self.aimpoint_latlon_deg or None in self.aimpoint_latlon_deg:
-            print('Aimpoint coordinates not set. Bearing could not be calculated.')
-        else:
-            self.launchpoint_initial_bearing_deg = geo.calculate_initial_bearing(
-                origin_lat_deg=self.launch_latlon_deg[0],
-                origin_lon_deg=self.launch_latlon_deg[1],
-                dest_lat_deg=self.aimpoint_latlon_deg[0],
-                dest_lon_deg=self.aimpoint_latlon_deg[1],
-            )
 
     def set_horizontal_velocity(self) -> None:
         """Compute and set horizontal velocity (km/sec).
@@ -320,22 +380,7 @@ class BallisticMissile():
         )
         print('Initial launch angle is '+
               f'{round(self.initial_launch_angle_deg, 2)} degrees.')
-            
-    def compute_current_bearing(
-        self,
-        position_lat_deg: float,
-        position_lon_deg: float,
-    ) -> float:
-        """Compute forward azimuth/initial bearing from current location to 
-        aimpoint. Bearing measured in degrees, clockwise from North."""
-        current_bearing_deg = geo.calculate_initial_bearing(
-            origin_lat_deg=position_lat_deg,
-            origin_lon_deg=position_lon_deg,
-            dest_lat_deg=self.aimpoint_latlon_deg[0],
-            dest_lon_deg=self.aimpoint_latlon_deg[1],
-            )
-        return current_bearing_deg
-        
+
     def compute_current_vertical_velocity(self, elapsed_time_sec: float) -> float:
         """Compute vertical velocity (km/s) given elapsed time in seconds.
         
