@@ -28,8 +28,57 @@ EARTH_ESCAPE_VELOCITY_KM_PER_S = (
 
 # Define classes
 class BallisticMissile():
-    """Base class for missiles with ballistic trajectories."""
+    """Base class for missiles with ballistic trajectories.
     
+    Attributes
+        aimpoint_latlon_deg: aimpoint latitude and longitude (decimal degrees)
+        current_altitude_km: current timestep altitude (kilometers)
+        current_bearing_deg: current timestep bearing (degrees)
+        current_latlon_deg: current timestep latitude and longitude (decimal degrees)
+        current_tilt_deg: current timestep tilt (degrees)
+        dist_to_target_km: distance between launchpoint and aimpoint (kilometers)
+        horiz_vel_km_per_sec: horizontal velocity (constant, kilometers per second)
+        initial_launch_angle_deg: initial launch angle (degrees)
+        initial_launch_vel_km_per_sec: initial velocity at launch, in the direction
+            of initial launch angle (kilometers per second)
+        initial_vert_vel_km_per_sec: initial vertical velocity at launch
+            (kilometers per second)
+        launch_latlon_deg: launchpoint latitude and longitude (decimal degrees)
+        launchpoint_initial_bearing_deg: forward azimuth/initial bearing from
+            launchpoint to aimpoint (degrees, clockwise from North)
+        max_change_vert_vel_km_per_sec: maximum change in vertical velocity
+            (kilometers per second)
+        time_to_target_sec: total time (in seconds) for missile to travel
+            from launchpoint to aimpoint
+        trajectory_data: pandas DataFrame containing latitude, longitude, 
+            altitude, bearing, and tilt for each timestep index
+        
+    Methods
+        build: set all initial launch parameters
+        compute_current_bearing: compute forward azimuth/initial bearing from 
+            current position to aimpoint
+        compute_current_vertical_velocity: compute vertical velocity given
+            elapsed time
+        launch: record missile position for each timestep from launch until impact
+        set_aimpoint: set aimpoint latitude/longitude after instantiation
+        set_distance_to_target: compute and set distance between launchpoint
+            and aimpoint
+        set_horizontal_velocity: compute and set (constant) horiztonal velocity
+        set_initial_launch_angle: compute and set initial launch angle
+        set_initial_launch_velocity: compute and set initial velocity at launch
+            in the direction of launch angle
+        set_initial_vertical_velocity: compute and set initial vertical velocity
+            at launch
+        set_launchpoint: set launchpoint latitude/longitude after instantiation
+        set_launchpoint_bearing: compute and set forward azimuth/initial bearing
+            from launchpoint to aimpoint
+        set_max_change_in_vertical_velocity: compute and set maximum change
+            in vertical velocity (if missile reaches target)
+        set_time_to_target: set time to target after instantiation
+        update_current_position: update latitude, longitude, altitude, bearing,
+            and tilt given elapsed time
+    """
+
     def __init__(
         self,
         launch_lat_deg: Optional[float] = None,
