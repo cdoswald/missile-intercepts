@@ -22,7 +22,29 @@ import kml_utils
 
 # Define classes
 class KMLTrajectorySim():
-    """Base class for simulating a missile trajectory in KML."""
+    """Base class for simulating a missile trajectory in KML.
+    
+    Attributes
+        altkm_colname: column name in data indicating altitude (kilometers)
+        bearingdeg_colname: column name in data indicating bearing (degrees)
+        collada_model_link: path or URL to 3D model in COLLADA format (.dae)
+        collada_model_scale: scale factor for all 3D model axes (x, y, and z)
+        data: pandas DataFrame containing trajectory data
+        kml_time_format: string format for KML timestamps/timespans
+        kml: simplekml document containing KML data
+        latdeg_colname: column name in data indicating latitude (degrees)
+        launch_time: date and time of missile launch
+        londeg_colname: column name in data indicating longitude (degrees)
+        sim_end_time: simulation end time
+        sim_start_time: simulation start time
+        tiltdeg_colname: column name in data indicating tilt (degrees)
+        time_colname: column name in data indicating time (seconds)
+
+    Methods
+        create_trajectory: create KML model and linestring objects tracing
+            missile trajectory
+        set_sim_start_end_times: calculate and set simulation start/end times
+    """
     
     def __init__(
         self,
@@ -45,12 +67,12 @@ class KMLTrajectorySim():
             collada_model_link: path or URL to 3D model in COLLADA format (.dae)
             collada_model_scale: scale factor for all 3D model axes (x, y, and z)
             launch_time: date and time of missile launch
-            time_colname: name of time (seconds) column in data
-            latdeg_colname: name of latitude (degrees) column in data
-            londeg_colname: name of longitude (degrees) column in data
-            altkm_colname: name of altitude (kilometers) column in data
-            bearingdeg_colname: name of bearing (degrees) column in data
-            tiltdeg_colname: name of tilt (degrees) column in data
+            time_colname: column name in data indicating time (seconds)
+            latdeg_colname: column name in data indicating latitude (degrees)
+            londeg_colname: column name in data indicating longitude (degrees)
+            altkm_colname: column name in data indicating altitude (kilometers)
+            bearingdeg_colname: column name in data indicating bearing (degrees)
+            tiltdeg_colname: column name in data indicating tilt (degrees)
             kml_time_format: string format for KML timestamps/timespans
         """
         self.data = data.sort_values([time_colname]).reset_index(drop=True)
