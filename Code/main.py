@@ -8,7 +8,6 @@ import sys
 
 # Import local modules
 from missile_classes import BallisticMissile
-from kml_classes import KMLTrajectorySim
 
 script_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 sys.path.insert(0, os.path.join(script_dir, 'Utils'))
@@ -27,18 +26,14 @@ def main(config_path: str) -> None:
             aimpoint_lat_deg=params['aimpoint_latlon'][0],
             aimpoint_lon_deg=params['aimpoint_latlon'][1],
             time_to_target_sec=params['time_to_target_sec'],
+            collada_model_link=params['COLLADA_model_link'],
+            collada_model_scale=params['COLLADA_model_scale'],
             )
         ballistic_missile.build()
         ballistic_missile.launch()
-        # Create ballistic missile KML trajectory
-        ballistic_missile_traj = KMLTrajectorySim(
-            data=ballistic_missile.trajectory_data,
-            collada_model_link=params['COLLADA_model_link'],
-            collada_model_scale=params['COLLADA_model_scale'],
-        )
-        ballistic_missile_traj.create_trajectory()
+        ballistic_missile.create_kml_trajectory()
         kml_utils.save_kmz(
-            kml=ballistic_missile_traj.kml,
+            kml=ballistic_missile.kml_trajectory,
             output_dir=r'..\KML',
             output_file_name=missile_name,
             attachment_dir=r'..\COLLADA',
