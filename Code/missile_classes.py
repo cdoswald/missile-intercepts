@@ -12,6 +12,8 @@ import numpy as np
 import pandas as pd
 
 # Import local modules
+from kml_classes import KMLTrajectorySim
+
 script_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 sys.path.insert(0, os.path.join(script_dir, 'Utils'))
 import geo_utils as geo
@@ -148,6 +150,7 @@ class BallisticMissile(Missile):
             of initial launch angle (kilometers per second)
         initial_vert_vel_km_per_sec: initial vertical velocity at launch
             (kilometers per second)
+        kml_trajectory: missile trajectory in KML format
         launch_latlon_deg: launchpoint latitude and longitude (decimal degrees)
         launchpoint_initial_bearing_deg: forward azimuth/initial bearing from
             launchpoint to aimpoint (degrees, clockwise from North)
@@ -160,6 +163,7 @@ class BallisticMissile(Missile):
         
     Methods
         build: set all initial launch parameters
+        create_kml_trajectory: create model trajectory in KML format
         compute_current_bearing: compute forward azimuth/initial bearing from 
             current position to aimpoint
         compute_current_vertical_velocity: compute vertical velocity given
@@ -191,6 +195,8 @@ class BallisticMissile(Missile):
         aimpoint_lat_deg: Optional[float] = None,
         aimpoint_lon_deg: Optional[float] = None,
         time_to_target_sec: Optional[float] = None,
+        collada_model_link: str = "../COLLADA/test_collada.dae",
+        collada_model_scale: float = 200,
     ) -> None:
         """Instantiate BallisticMissile class.
         
@@ -201,10 +207,14 @@ class BallisticMissile(Missile):
             aimpoint_lon_deg: Aimpoint longitude in degrees
             time_to_target_sec: Total time (in seconds) for missile to travel
                 from launchpoint to aimpoint
+            collada_model_link: path or URL to 3D model in COLLADA format (.dae)
+            collada_model_scale: scale factor for all 3D model axes (x, y, and z)
         """
         super(BallisticMissile, self).__init__(launch_lat_deg, launch_lon_deg)
         self.aimpoint_latlon_deg = [aimpoint_lat_deg, aimpoint_lon_deg]
         self.time_to_target_sec = time_to_target_sec
+        self.collada_model_link = collada_model_link
+        self.collada_model_scale = collada_model_scale
 
     def build(self) -> None:
         """Set all initial launch parameters for missile."""
@@ -402,6 +412,17 @@ class BallisticMissile(Missile):
             )
             return current_vert_vel_km_per_sec
 
+    def create_kml_trajectory(self) -> None:
+        """Create missile trajectory in KML format."""
+        kml_trajectory_sim = KMLTrajectorySim(
+            data=self.trajectory_data,
+            collada_model_link=self.collada_model_link,
+            collada_model_scale=self.collada_model_scale,
+        )
+        kml_trajectory_sim.create_trajectory()
+        self.kml_trajectory = kml_trajectory_sim.kml
+
+
 class TerminalPhaseInterceptor(Missile):
     """Base class for terminal phase interceptors.
     
@@ -423,7 +444,7 @@ class TerminalPhaseInterceptor(Missile):
         launch_lat_deg: Optional[float] = None,
         launch_lon_deg: Optional[float] = None,
         ballistic_missile: Optional[Type[BallisticMissile]] = None,
-        max_range_km: Optional[float] = None,
+        max_ground_range_km: Optional[float] = None,
         intercept_dist_from_aimpoint_km: Optional[float] = None,
         initial_launch_vel_km_per_sec: Optional[float] = None,
         
@@ -434,7 +455,7 @@ class TerminalPhaseInterceptor(Missile):
             launch_lat_deg: Launchpoint latitude in degrees
             launch_lon_deg: Launchpoint longitude in degrees
             ballistic_missile: ballistic missile to intercept in terminal phase
-            max_range_km: maximum range of interceptor (kilometers)
+            max_ground_range_km: maximum ground range of interceptor (kilometers)
             intercept_dist_from_aimpoint_km: distance from BallisticMissile 
                 aimpoint to intercept BallisticMissile (kilometers)
             initial_launch_vel_km_per_sec: initial velocity at launch, in the 
@@ -444,19 +465,19 @@ class TerminalPhaseInterceptor(Missile):
             launch_lat_deg, launch_lon_deg
         )
         self.ballistic_missile = ballistic_missile
-        self.max_range_km = max_range_km
+        self.max_ground_range_km = max_ground_range_km
         self.intercept_dist_from_aimpoint_km = intercept_dist_from_aimpoint_km
         self.initial_launch_vel_km_per_sec = initial_launch_vel_km_per_sec
         
-        def confirm_missile_in_range(self) -> bool:
+        def confirm_missile_in_ground_range(self) -> bool:
             """If max range set, determine if ballistic missile is within range
             of interceptor at any point prior to impact."""
             pass
 
         def determine_intercept_condition(self) -> None:
             """Determine intercept criteria based on specified inputs."""
-            if self.max_range_km:
-                if not self.confirm_missile_in_range:
+            if self.max_ground_range_km:
+                if not self.confirm_missile_in_ground_range:
                     print('Ballistic missile is out of range of interceptor.')
                     #TODO: create red KML range indicating out of range
                     return
