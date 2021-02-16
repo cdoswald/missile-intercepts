@@ -179,3 +179,55 @@ def determine_square_coords(
         )
         coords_list.append((latlon_list[1], latlon_list[0])) # Longitude first for simplekml
     return coords_list
+
+def calculate_cross_track_distance(
+    origin_lat_deg: float, origin_lon_deg: float,
+    dest_lat_deg: float, dest_lon_deg: float,
+    cross_lat_deg: float, cross_lon_deg: float,
+) -> float:
+    """Calculate shortest distance from a third point to a great-circle path 
+    between origin and destination points, in kilometers.
+    Source: https://www.movable-type.co.uk/scripts/latlong.html.    
+    
+    Arguments
+        origin_lat_deg: float latitude of origin location in decimal degrees
+        origin_lon_deg: float longitude of origin location in decimal degrees
+        dest_lat_deg: float latitude of destination location in decimal degrees
+        dest_lon_deg: float longitude of destination location in decimal degrees
+        cross_lat_deg: float longitude of cross-track location in decimal degrees
+        cross_lon_deg: float longitude of cross-track location in decimal degrees
+        
+    Returns
+        distance_km: float cross-track distance in kilometers
+    """
+    # Calculate initial bearing between origin/destination and origin/cross location
+    bearing_origin_dest_rad = deg_to_rad(
+        calculate_initial_bearing(
+            origin_lat_deg=origin_lat_deg,
+            origin_lon_deg=origin_lon_deg,
+            dest_lat_deg=dest_lat_deg,
+            dest_lon_deg=dest_lon_deg,
+        )
+    )
+    bearing_origin_cross_rad = deg_to_rad(
+        calculate_initial_bearing(
+            origin_lat_deg=origin_lat_deg,
+            origin_lon_deg=origin_lon_deg,
+            dest_lat_deg=cross_lat_deg,
+            dest_lon_deg=cross_lon_deg,
+        )
+    )
+    # Calculate angular distance from origin to cross location
+    dist_origin_to_cross_km = calculate_great_circle_distance(
+        origin_lat_deg=origin_lat_deg,
+        origin_lon_deg=origin_lon_deg,
+        dest_lat_deg=cross_lat_deg,
+        dest_lon_deg=cross_lon_deg,
+        )
+    ang_dist_origin_cross_rad = dist_origin_to_cross_km / EARTH_RADIUS_KM
+    # Calculate cross-track distance
+    distance_km = np.arcsin(
+        np.sin(ang_dist_origin_cross_rad)
+        * np.sin(bearing_origin_cross_rad - bearing_origin_dest_rad)
+    ) * EARTH_RADIUS_KM
+    return distance_km
