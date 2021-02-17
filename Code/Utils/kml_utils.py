@@ -5,8 +5,15 @@
 import os
 from typing import List, Optional, Tuple
 
+import numpy as np
+
 import simplekml
-        
+
+# Import local modules
+#script_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+#sys.path.insert(0, script_dir)
+import geo_utils as geo
+
 # Define functions
 def save_kmz(
     kml: simplekml.kml.Kml,
@@ -138,6 +145,51 @@ def add_kml_linestring(
     linestring.timespan.end = timespan_end
     linestring.altitudemode = simplekml.AltitudeMode.relativetoground
     return kml_folder
+
+def add_kml_circle_linestring(
+    kml_folder: simplekml.featgeom.Folder,
+    origin_lat_deg: float,
+    origin_lon_deg: float,
+    radius_km: float,
+    style: simplekml.styleselector.Style,
+    linestring_label: str = '',
+    timespan_begin: str = '',
+    timespan_end: str = '',
+) -> simplekml.featgeom.Folder:
+    """Add a simplekml circular Linestring object to existing KML folder.
+    
+    Arguments
+        kml_folder: simplekml folder to which to add a new linestring object
+        origin_lat_deg: latitude of center point in degrees
+        origin_lon_deg: longitude of center point in degrees
+        radius_km: distance from origin to all points on linestring in kilometers
+        style: simplekml linestring style
+        linestring_label: string label for linestring
+        timespan_begin: string (in KML format) indicating linestring start time
+        timespan_end: string (in KML format) indicating linestring end time
+
+    Returns
+        kml_folder: simplekml folder with newly added linestring object
+    """
+    linestring = kml_folder.newlinestring(name=linestring_label)
+    coords_list = []
+    for angle_deg in np.arange(361):
+        latlon_deg = geo.determine_destination_coords(
+            origin_lat_deg=origin_lat_deg,
+            origin_lon_deg=origin_lon_deg,
+            distance_km=radius_km,
+            angle_deg=angle_deg,
+        )
+        coords_list.append(
+            (latlon_deg[1], latlon_deg[0]) # Longitude first for simplekml
+        ) 
+    linestring.coords = coords_list
+    linestring.style = style
+    linestring.timespan.begin = timespan_begin
+    linestring.timespan.end = timespan_end
+    linestring.altitudemode = simplekml.AltitudeMode.relativetoground
+    return kml_folder
+    #TODO: streamline by calling add_kml_linestring with specific args
 
 def add_kml_track(
     kml_folder: simplekml.featgeom.Folder,
