@@ -447,7 +447,6 @@ class TerminalPhaseInterceptor(Missile):
         max_ground_range_km: Optional[float] = None,
         intercept_dist_from_aimpoint_km: Optional[float] = None,
         initial_launch_vel_km_per_sec: Optional[float] = None,
-        
     ) -> None:
         """Instantiate TerminalPhaseInterceptor class.
         
@@ -469,15 +468,23 @@ class TerminalPhaseInterceptor(Missile):
         self.intercept_dist_from_aimpoint_km = intercept_dist_from_aimpoint_km
         self.initial_launch_vel_km_per_sec = initial_launch_vel_km_per_sec
         
-        def confirm_missile_in_ground_range(self) -> bool:
-            """If max range set, determine if ballistic missile is within range
-            of interceptor at any point prior to impact."""
-            pass
+        def determine_missile_in_ground_range(self) -> bool:
+            """If max range set, determine if ballistic missile trajectory 
+            is within ground range of interceptor at any point prior to impact."""
+            min_ground_dist_to_traj_km = geo.calculate_cross_track_distance(
+                origin_lat_deg=ballistic_missile.launch_latlon_deg[0],
+                origin_lon_deg=ballistic_missile.launch_latlon_deg[1],
+                dest_lat_deg=ballistic_missile.aimpoint_latlon_deg[0],
+                dest_lon_deg=ballistic_missile.aimpoint_latlon_deg[1],
+                cross_lat_deg=self.launch_latlon_deg[0],
+                cross_lon_deg=self.launch_latlon_deg[1],
+                )
+            return self.max_ground_range >= min_ground_dist_to_traj_km
 
         def determine_intercept_condition(self) -> None:
             """Determine intercept criteria based on specified inputs."""
             if self.max_ground_range_km:
-                if not self.confirm_missile_in_ground_range:
+                if not self.determine_missile_in_ground_range:
                     print('Ballistic missile is out of range of interceptor.')
                     #TODO: create red KML range indicating out of range
                     return
