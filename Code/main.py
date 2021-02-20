@@ -17,14 +17,13 @@ import kml_utils
 def main(config_path: str) -> None:
     with open(config_path, 'r') as file:
         config = json.load(file)
-    
     for missile_name, params in config.items():
         # Create ballistic missile
         ballistic_missile = BallisticMissile(
-            launch_lat_deg=params['launchpoint_latlon'][0],
-            launch_lon_deg=params['launchpoint_latlon'][1],
-            aimpoint_lat_deg=params['aimpoint_latlon'][0],
-            aimpoint_lon_deg=params['aimpoint_latlon'][1],
+            LP_lat_deg=params['launchpoint_latlon'][0],
+            LP_lon_deg=params['launchpoint_latlon'][1],
+            AP_lat_deg=params['aimpoint_latlon'][0],
+            AP_lon_deg=params['aimpoint_latlon'][1],
             time_to_target_sec=params['time_to_target_sec'],
             collada_model_link=params['COLLADA_model_link'],
             collada_model_scale=params['COLLADA_model_scale'],

@@ -6,14 +6,13 @@ from collections import OrderedDict
 import inspect
 import os
 import sys
-from typing import Optional, Type
+from typing import Dict, Optional, Type
 
 import numpy as np
 import pandas as pd
 
 # Import local modules
 from kml_classes import KMLTrajectorySim
-
 script_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 sys.path.insert(0, os.path.join(script_dir, 'Utils'))
 import geo_utils as geo
@@ -34,16 +33,16 @@ class Missile(ABC):
     
     def __init__(
         self,
-        launch_lat_deg: Optional[float] = None,
-        launch_lon_deg: Optional[float] = None,
+        LP_lat_deg: Optional[float] = None,
+        LP_lon_deg: Optional[float] = None,
     ) -> None:
         """Instantiate missile with launchpoint latitude and longitude.
         
         Arguments
-            launch_lat_deg: Launchpoint latitude in degrees
-            launch_lon_deg: Launchpoint longitude in degrees
+            LP_lat_deg: Launchpoint latitude in degrees
+            LP_lon_deg: Launchpoint longitude in degrees
         """
-        self.launch_latlon_deg = [launch_lat_deg, launch_lon_deg]
+        self.LP_latlon_deg = (LP_lat_deg, LP_lon_deg)
     
     @abstractmethod
     def build(self) -> None:
@@ -55,10 +54,10 @@ class Missile(ABC):
         for each timestep from launch until impact."""
 
     @abstractmethod
-    def update_current_position(self, elapsed_time_sec: float) -> None:
+    def get_current_position(self, elapsed_time_sec: float) -> None:
         """Compute current latitude, longitude, altitude, bearing (heading), 
         and tilt based on elapsed time."""
-
+        
     @abstractmethod
     def set_aimpoint(self) -> None:
         """Set aimpoint latitude and longitude."""
@@ -77,45 +76,45 @@ class Missile(ABC):
 
     def set_launchpoint(
         self,
-        launch_lat_deg: float,
-        launch_lon_deg: float,
+        LP_lat_deg: float,
+        LP_lon_deg: float,
     ) -> None:
         """Set launchpoint latitude and longitude after instantiation.
         
         Arguments
-            launch_lat_deg: Launchpoint latitude in degrees
-            launch_lon_deg: Launchpoint longitude in degrees
+            LP_lat_deg: Launchpoint latitude in degrees
+            LP_lon_deg: Launchpoint longitude in degrees
         """
-        self.launch_latlon_deg = [launch_lat_deg, launch_lon_deg]
+        self.LP_latlon_deg = [LP_lat_deg, LP_lon_deg]
 
     def set_distance_to_target(self) -> None:
         """Compute and set great-circle distance (in km) between launchpoint 
         and aimpoint."""
-        if not self.launch_latlon_deg or None in self.launch_latlon_deg:
+        if not self.LP_latlon_deg or None in self.LP_latlon_deg:
             print('Launchpoint coordinates not set. Distance could not be calculated.')
-        elif not self.aimpoint_latlon_deg or None in self.aimpoint_latlon_deg:
+        elif not self.AP_latlon_deg or None in self.AP_latlon_deg:
             print('Aimpoint coordinates not set. Distance could not be calculated.')
         else:
             self.dist_to_target_km = geo.calculate_great_circle_distance(
-                origin_lat_deg=self.launch_latlon_deg[0],
-                origin_lon_deg=self.launch_latlon_deg[1],
-                dest_lat_deg=self.aimpoint_latlon_deg[0],
-                dest_lon_deg=self.aimpoint_latlon_deg[1],
+                origin_lat_deg=self.LP_latlon_deg[0],
+                origin_lon_deg=self.LP_latlon_deg[1],
+                dest_lat_deg=self.AP_latlon_deg[0],
+                dest_lon_deg=self.AP_latlon_deg[1],
             )
 
     def set_launchpoint_bearing(self) -> None:
         """Compute and set forward azimuth/initial bearing from launchpoint
         to aimpoint. Bearing measured in degrees, clockwise from North."""
-        if not self.launch_latlon_deg or None in self.launch_latlon_deg:
+        if not self.LP_latlon_deg or None in self.LP_latlon_deg:
             print('Launchpoint coordinates not set. Bearing could not be calculated.')
-        elif not self.aimpoint_latlon_deg or None in self.aimpoint_latlon_deg:
+        elif not self.AP_latlon_deg or None in self.AP_latlon_deg:
             print('Aimpoint coordinates not set. Bearing could not be calculated.')
         else:
             self.launchpoint_initial_bearing_deg = geo.calculate_initial_bearing(
-                origin_lat_deg=self.launch_latlon_deg[0],
-                origin_lon_deg=self.launch_latlon_deg[1],
-                dest_lat_deg=self.aimpoint_latlon_deg[0],
-                dest_lon_deg=self.aimpoint_latlon_deg[1],
+                origin_lat_deg=self.LP_latlon_deg[0],
+                origin_lon_deg=self.LP_latlon_deg[1],
+                dest_lat_deg=self.AP_latlon_deg[0],
+                dest_lon_deg=self.AP_latlon_deg[1],
             )
 
     def compute_current_bearing(
@@ -128,8 +127,8 @@ class Missile(ABC):
         current_bearing_deg = geo.calculate_initial_bearing(
             origin_lat_deg=position_lat_deg,
             origin_lon_deg=position_lon_deg,
-            dest_lat_deg=self.aimpoint_latlon_deg[0],
-            dest_lon_deg=self.aimpoint_latlon_deg[1],
+            dest_lat_deg=self.AP_latlon_deg[0],
+            dest_lon_deg=self.AP_latlon_deg[1],
             )
         return current_bearing_deg
 
@@ -138,7 +137,7 @@ class BallisticMissile(Missile):
     """Base class for missiles with ballistic trajectories.
     
     Attributes
-        aimpoint_latlon_deg: aimpoint latitude and longitude (decimal degrees)
+        AP_latlon_deg: aimpoint latitude and longitude (decimal degrees)
         current_altitude_km: current timestep altitude (kilometers)
         current_bearing_deg: current timestep bearing (degrees)
         current_latlon_deg: current timestep latitude and longitude (decimal degrees)
@@ -151,7 +150,7 @@ class BallisticMissile(Missile):
         initial_vert_vel_km_per_sec: initial vertical velocity at launch
             (kilometers per second)
         kml_trajectory: missile trajectory in KML format
-        launch_latlon_deg: launchpoint latitude and longitude (decimal degrees)
+        LP_latlon_deg: launchpoint latitude and longitude (decimal degrees)
         launchpoint_initial_bearing_deg: forward azimuth/initial bearing from
             launchpoint to aimpoint (degrees, clockwise from North)
         max_change_vert_vel_km_per_sec: maximum change in vertical velocity
@@ -190,10 +189,10 @@ class BallisticMissile(Missile):
 
     def __init__(
         self,
-        launch_lat_deg: Optional[float] = None,
-        launch_lon_deg: Optional[float] = None,
-        aimpoint_lat_deg: Optional[float] = None,
-        aimpoint_lon_deg: Optional[float] = None,
+        LP_lat_deg: Optional[float] = None,
+        LP_lon_deg: Optional[float] = None,
+        AP_lat_deg: Optional[float] = None,
+        AP_lon_deg: Optional[float] = None,
         time_to_target_sec: Optional[float] = None,
         collada_model_link: str = "../COLLADA/test_collada.dae",
         collada_model_scale: float = 200,
@@ -201,31 +200,31 @@ class BallisticMissile(Missile):
         """Instantiate BallisticMissile class.
         
         Arguments
-            launch_lat_deg: Launchpoint latitude in degrees
-            launch_lon_deg: Launchpoint longitude in degrees
-            aimpoint_lat_deg: Aimpoint latitude in degrees
-            aimpoint_lon_deg: Aimpoint longitude in degrees
+            LP_lat_deg: Launchpoint latitude in degrees
+            LP_lon_deg: Launchpoint longitude in degrees
+            AP_lat_deg: Aimpoint latitude in degrees
+            AP_lon_deg: Aimpoint longitude in degrees
             time_to_target_sec: Total time (in seconds) for missile to travel
                 from launchpoint to aimpoint
             collada_model_link: path or URL to 3D model in COLLADA format (.dae)
             collada_model_scale: scale factor for all 3D model axes (x, y, and z)
         """
-        super(BallisticMissile, self).__init__(launch_lat_deg, launch_lon_deg)
-        self.aimpoint_latlon_deg = [aimpoint_lat_deg, aimpoint_lon_deg]
+        super(BallisticMissile, self).__init__(LP_lat_deg, LP_lon_deg)
+        self.AP_latlon_deg = (AP_lat_deg, AP_lon_deg)
         self.time_to_target_sec = time_to_target_sec
         self.collada_model_link = collada_model_link
         self.collada_model_scale = collada_model_scale
 
     def build(self) -> None:
         """Set all initial launch parameters for missile."""
-        if not self.launch_latlon_deg or None in self.launch_latlon_deg:
-            launch_lat_deg = float(input('Enter launch latitude: '))
-            launch_lon_deg = float(input('Enter launch longitude: '))
-            self.set_launchpoint(launch_lat_deg, launch_lon_deg)
-        if not self.aimpoint_latlon_deg or None in self.aimpoint_latlon_deg:
-            aimpoint_lat_deg = float(input('Enter aimpoint latitude: '))
-            aimpoint_lon_deg = float(input('Enter aimpoint longitude: '))
-            self.set_aimpoint(aimpoint_lat_deg, aimpoint_lon_deg)
+        if not self.LP_latlon_deg or None in self.LP_latlon_deg:
+            LP_lat_deg = float(input('Enter launch latitude: '))
+            LP_lon_deg = float(input('Enter launch longitude: '))
+            self.set_launchpoint(LP_lat_deg, LP_lon_deg)
+        if not self.AP_latlon_deg or None in self.AP_latlon_deg:
+            AP_lat_deg = float(input('Enter aimpoint latitude: '))
+            AP_lon_deg = float(input('Enter aimpoint longitude: '))
+            self.set_aimpoint(AP_lat_deg, AP_lon_deg)
         if self.time_to_target_sec is None:
             time_to_target_sec = float(input('Enter time to target (sec): '))
             self.set_time_to_target(time_to_target_sec)
@@ -244,56 +243,65 @@ class BallisticMissile(Missile):
         Arguments
             timestep_sec: Timestep interval in seconds
         """
-        trajectory_dict = OrderedDict()
+        traj_dict = OrderedDict()
         for elapsed_time_sec in np.arange(
             start=0,
             stop=self.time_to_target_sec + timestep_sec,
             step=timestep_sec,
         ):
-            self.update_current_position(elapsed_time_sec)
-            trajectory_dict[elapsed_time_sec] = {
-                'lat_deg':self.current_latlon_deg[0],
-                'lon_deg':self.current_latlon_deg[1],
-                'alt_km':self.current_altitude_km,
-                'bearing_deg':self.current_bearing_deg,
-                'tilt_deg':self.current_tilt_deg,
-            }
+            position_dict = self.get_current_position(elapsed_time_sec)
+            orientation_dict = self.get_current_orientation(elapsed_time_sec)
+            traj_dict[elapsed_time_sec] = {**position_dict, **orientation_dict}
         self.trajectory_data = (
-            pd.DataFrame.from_dict(trajectory_dict, orient='index')
+            pd.DataFrame.from_dict(traj_dict, orient='index')
             .reset_index()
             .rename(columns={'index':'time_sec'})
         )
 
-    def update_current_position(
+    def get_current_position(
         self,
         elapsed_time_sec: float,
-    ) -> None:
-        """Update latitude, longitude, altitude, bearing (heading), and tilt
-        of current position based on elapsed time.
+    ) -> Dict[str, float]:
+        """Get the latitude, longitue, and altitude of current position 
+        based on elapsed time.
 
         Arguments
-            elapsed_time_sec: elapsed time since launch (in seconds)
+            elapsed_time_sec: elapsed time since launch (seconds)
         """
-        # Latitude/longitude
-        dist_traveled_km = self.horiz_vel_km_per_sec * elapsed_time_sec
-        self.current_latlon_deg = geo.determine_destination_coords(
-            origin_lat_deg=self.launch_latlon_deg[0],
-            origin_lon_deg=self.launch_latlon_deg[1],
-            distance_km=dist_traveled_km,
+        current_latlon_deg = geo.determine_destination_coords(
+            origin_lat_deg=self.LP_latlon_deg[0],
+            origin_lon_deg=self.LP_latlon_deg[1],
+            distance_km=(self.horiz_vel_km_per_sec * elapsed_time_sec),
             initial_bearing_deg=self.launchpoint_initial_bearing_deg,
         )
-        # Altitude (integrate current vertical velocity formula)
-        self.current_altitude_km = (
+        # Integrate vertical velocity formula
+        current_altitude_km = ( 
             self.initial_vert_vel_km_per_sec * elapsed_time_sec
             + (0.5 * GRAVITY_ACCEL_KM_PER_S2 * elapsed_time_sec**2)
+        ) 
+        current_position_dict = {
+            'lat_deg':current_latlon_deg[0],
+            'lon_deg':current_latlon_deg[1],
+            'alt_km':current_altitude_km,
+        }
+        return current_position_dict
+
+    def get_current_orientation(
+        self,
+        elapsed_time_sec: float,
+    ) -> Dict[str, float]:
+        """Get the heading, tilt, and roll for current position based on 
+        elapsed time.
+
+        Arguments
+            elapsed_time_sec: elapsed time since launch (seconds)
+        """
+        current_position_dict = self.get_current_position(elapsed_time_sec)
+        current_bearing_deg = self.compute_current_bearing(
+            position_lat_deg=current_position_dict['lat_deg'],
+            position_lon_deg=current_position_dict['lon_deg'],
         )
-        # Bearing/heading (from current position)
-        self.current_bearing_deg = self.compute_current_bearing(
-            position_lat_deg=self.current_latlon_deg[0],
-            position_lon_deg=self.current_latlon_deg[1],
-        )
-        # Tilt (from current position)
-        self.current_tilt_deg = geo.rad_to_deg(
+        current_tilt_deg = geo.rad_to_deg(
             geo.convert_trig_to_compass_angle(
                 np.arctan2(
                     self.compute_current_vertical_velocity(elapsed_time_sec),
@@ -301,19 +309,25 @@ class BallisticMissile(Missile):
                 )
             )
         )
+        current_orientation_dict = {
+            'bearing_deg':current_bearing_deg,
+            'tilt_deg':current_tilt_deg,
+            'roll_deg':0,
+        }
+        return current_orientation_dict
 
     def set_aimpoint(
         self,
-        aimpoint_lat_deg: float,
-        aimpoint_lon_deg: float,
+        AP_lat_deg: float,
+        AP_lon_deg: float,
     ) -> None:
         """Set aimpoint latitude and longitude after instantiation.
         
         Arguments
-            aimpoint_lat_deg: Aimpoint latitude in degrees
-            aimpoint_lon_deg: Aimpoint longitude in degrees
+            AP_lat_deg: Aimpoint latitude in degrees
+            AP_lon_deg: Aimpoint longitude in degrees
         """
-        self.aimpoint_latlon_deg = [aimpoint_lat_deg, aimpoint_lon_deg]
+        self.AP_latlon_deg = (AP_lat_deg, AP_lon_deg)
 
     def set_time_to_target(
         self,
@@ -427,78 +441,97 @@ class TerminalPhaseInterceptor(Missile):
     """Base class for terminal phase interceptors.
     
     Attributes
-        ballistic_missile: BallisticMissile to intercept in terminal phase
         initial_launch_vel_km_per_sec: initial velocity at launch, in the 
             direction of initial launch angle (kilometers per second)
-        intercept_dist_from_aimpoint_km: distance from BallisticMissile 
-            aimpoint to intercept BallisticMissile (kilometers)
-        launch_latlon_deg: launchpoint latitude and longitude (decimal degrees)
-        max_range_km: maximum range of interceptor (kilometers)
-        
+        intercept_dist_from_TMAP_km: intercept point distance from targeted 
+            missile aimpoint (TMAP) (kilometers)
+        LP_latlon_deg: interceptor launchpoint latitude and longitude 
+            (decimal degrees)
+        max_ground_range_km: maximum ground range of interceptor (kilometers)
+        targeted_missile: BallisticMissile to intercept in terminal phase
+
     Methods
     
     """
     
     def __init__(
         self,
-        launch_lat_deg: Optional[float] = None,
-        launch_lon_deg: Optional[float] = None,
-        ballistic_missile: Optional[Type[BallisticMissile]] = None,
+        LP_lat_deg: Optional[float] = None,
+        LP_lon_deg: Optional[float] = None,
+        targeted_missile: Optional[Type[BallisticMissile]] = None,
         max_ground_range_km: Optional[float] = None,
-        intercept_dist_from_aimpoint_km: Optional[float] = None,
+        intercept_dist_from_TMAP_km: Optional[float] = None,
         initial_launch_vel_km_per_sec: Optional[float] = None,
     ) -> None:
         """Instantiate TerminalPhaseInterceptor class.
         
         Arguments
-            launch_lat_deg: Launchpoint latitude in degrees
-            launch_lon_deg: Launchpoint longitude in degrees
-            ballistic_missile: ballistic missile to intercept in terminal phase
+            LP_lat_deg: Launchpoint latitude in degrees
+            LP_lon_deg: Launchpoint longitude in degrees
+            targeted_missile: missile targeted for interception in terminal phase
             max_ground_range_km: maximum ground range of interceptor (kilometers)
-            intercept_dist_from_aimpoint_km: distance from BallisticMissile 
-                aimpoint to intercept BallisticMissile (kilometers)
-            initial_launch_vel_km_per_sec: initial velocity at launch, in the 
-                direction of initial launch angle (kilometers per second)
+            intercept_dist_from_TMAP_km: intercept point distance from 
+                targeted missile aimpoint (TMAP) (kilometers)
+            initial_launch_vel_km_per_sec: initial launch velocity of interceptor,
+                in the direction of initial launch angle (kilometers per second)
         """
-        super(TerminalPhaseInterceptor, self).__init__(
-            launch_lat_deg, launch_lon_deg
-        )
-        self.ballistic_missile = ballistic_missile
+        super(TerminalPhaseInterceptor, self).__init__(LP_lat_deg, LP_lon_deg)
+        self.targeted_missile = targeted_missile
         self.max_ground_range_km = max_ground_range_km
-        self.intercept_dist_from_aimpoint_km = intercept_dist_from_aimpoint_km
+        self.intercept_dist_from_TMAP_km = intercept_dist_from_TMAP_km
         self.initial_launch_vel_km_per_sec = initial_launch_vel_km_per_sec
         
-        def determine_missile_in_ground_range(self) -> bool:
-            """If max range set, determine if ballistic missile trajectory 
-            is within ground range of interceptor at any point prior to impact."""
-            min_ground_dist_to_traj_km = geo.calculate_cross_track_distance(
-                origin_lat_deg=ballistic_missile.launch_latlon_deg[0],
-                origin_lon_deg=ballistic_missile.launch_latlon_deg[1],
-                dest_lat_deg=ballistic_missile.aimpoint_latlon_deg[0],
-                dest_lon_deg=ballistic_missile.aimpoint_latlon_deg[1],
-                cross_lat_deg=self.launch_latlon_deg[0],
-                cross_lon_deg=self.launch_latlon_deg[1],
-                )
-            return self.max_ground_range >= min_ground_dist_to_traj_km
+    def determine_missile_in_ground_range(self) -> bool:
+        """If max range set, determine if targeted missile trajectory 
+        is within ground range of interceptor at any point prior to impact."""
+        min_ground_dist_to_TM_traj_km = geo.calculate_cross_track_distance(
+            origin_lat_deg=self.targeted_missile.LP_latlon_deg[0],
+            origin_lon_deg=self.targeted_missile.LP_latlon_deg[1],
+            dest_lat_deg=self.targeted_missile.AP_latlon_deg[0],
+            dest_lon_deg=self.targeted_missile.AP_latlon_deg[1],
+            cross_lat_deg=self.LP_latlon_deg[0],
+            cross_lon_deg=self.LP_latlon_deg[1],
+            )
+        return self.max_ground_range >= min_ground_dist_to_TM_traj_km
 
-        def determine_intercept_condition(self) -> None:
-            """Determine intercept criteria based on specified inputs."""
-            if self.max_ground_range_km:
-                if not self.determine_missile_in_ground_range:
-                    print('Ballistic missile is out of range of interceptor.')
-                    #TODO: create red KML range indicating out of range
-                    return
-                else:
-                    pass
-                    #TODO: create green KML range indicating within range
-            if self.initial_launch_vel_km_per_sec:
-                pass
-                #TODO: compute possible impact locations, add criteria for
-                # selecting possible locations (e.g., farthest from aimpoint)
-            elif self.intercept_dist_from_aimpoint_km:
-                pass
-                #TODO: Determine BallisticMissile location/altitude given
-                # distance from aimpoint
+    def determine_intercept_condition(self) -> None:
+        """Determine intercept criteria based on specified inputs."""
+        if self.max_ground_range_km:
+            if not self.determine_missile_in_ground_range:
+                print('Targeted missile trajectory is out of '+
+                      f'{self.max_ground_range_km} km ground range '+
+                      'of interceptor.')
+                #TODO: create red KML range indicating out of range
+                return
             else:
+                #TODO: create green KML range indicating within range
                 pass
-                #TODO: select criteria if no user input
+        self.intercept_seconds_after_TM_launch = self.compute_intercept_time()
+        
+        
+        #TODO: change update_current_position to 
+        
+        
+        if self.initial_launch_vel_km_per_sec:
+            pass
+            #TODO: compute possible impact locations, add criteria for
+            # selecting possible locations (e.g., farthest from aimpoint)
+        elif self.intercept_dist_from_ballistic_AP_km:
+            pass
+            #TODO: Determine BallisticMissile location/altitude given
+            # distance from aimpoint
+        else:
+            pass
+            #TODO: select criteria if no user input
+
+    def compute_intercept_time(self) -> float:
+        """Compute the time of intercept in seconds after targeted missile (TM)
+        launch, given intercept distance from targeted missile aimpoint (TMAP).
+        """
+        if self.intercept_dist_from_TMAP_km:
+            intercept_seconds_after_TM_launch = (
+                (self.targeted_missile.dist_to_target_km 
+                 - self.intercept_dist_from_TMAP_km)
+                / self.targeted_missile.horiz_vel_km_per_sec
+            )
+            return intercept_seconds_after_TM_launch
