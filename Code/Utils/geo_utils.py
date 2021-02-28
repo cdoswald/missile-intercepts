@@ -46,6 +46,48 @@ def convert_trig_to_compass_angle(trig_angle: float, radians: bool = True):
         compass_angle = (90 - trig_angle) % 360
     return compass_angle
 
+def convert_latlon_to_nvector(lat_deg: float, lon_deg: float,
+) -> Tuple[float, float, float]:
+    """Convert a latitude-longitude pair (in decimal degrees) to an orthogonal
+    (normal) vector <x, y, z>. Note: right-handed coordinate system is used
+    (e.g., positive x-axis points toward 0 degrees North, 0 degrees East;
+    positive y-axis points toward 0 degrees North, 90 degrees East;
+    positive z-axis points toward 90 degrees North).
+    Source: https://www.movable-type.co.uk/scripts/latlong-vectors.html.
+
+    Arguments
+        lat_deg: latitude in decimal degrees
+        lon_deg: longitude in decimal degrees
+
+    Returns
+        n_vector: orthogonal vector <x, y, z>
+    """
+    lat_rad, lon_rad = deg_to_rad(lat_deg), deg_to_rad(lon_deg)
+    x = np.cos(lat_rad) * np.cos(lon_rad)
+    y = np.cos(lat_rad) * np.sin(lon_rad)
+    z = np.sin(lat_rad)
+    return (x, y, z)
+
+def convert_nvector_to_latlon(nvector: Tuple[float, float, float],
+) -> Tuple[float, float]:
+    """Convert an orthogonal (normal) vector <x, y, z> to a latitude-longitude
+    pair (in decimal degrees). Note: right-handed coordinate system is used
+    (e.g., positive x-axis points toward 0 degrees North, 0 degrees East;
+    positive y-axis points toward 0 degrees North, 90 degrees East;
+    positive z-axis points toward 90 degrees North).
+    Source: https://www.movable-type.co.uk/scripts/latlong-vectors.html.
+
+    Arguments
+        nvector: orthogonal vector <x, y, z>
+
+    Returns
+        latlon: tuple containing latitude and longitude in decimal degrees
+    """
+    x, y, z = nvector[0], nvector[1], nvector[2]
+    lat_deg = rad_to_deg(np.arctan2(z, np.sqrt(x**2 + y**2)))
+    lon_deg = rad_to_deg(np.arctan2(y, x))
+    return (lat_deg, lon_deg)
+
 def calculate_great_circle_distance(
     origin_lat_deg: float, origin_lon_deg: float,
     dest_lat_deg: float, dest_lon_deg: float,
@@ -112,7 +154,7 @@ def calculate_initial_bearing(
 def determine_destination_coords(
     origin_lat_deg: float, origin_lon_deg: float,
     distance_km: float, initial_bearing_deg: float
-) -> List[float]:
+) -> Tuple[float, float]:
     """Determine the latitude and longitude of a destination point given an
     initial latitude, longitude, and bearing (clockwise from 0 degrees North).
     Source: https://www.movable-type.co.uk/scripts/latlong.html.
@@ -124,9 +166,8 @@ def determine_destination_coords(
         initial_bearing_deg: float bearing in degrees from origin to destination
     
     Returns
-        [dest_lat_deg, dest_lon_deg]: list containing two float values for
-        latitude and longitude of destination in decimal degrees
-        """
+        dest_lat_deg, dest_lon_deg: destination latitude/longitude (decimal degrees)
+    """
     # Convert degrees to radians
     origin_lat_rad = deg_to_rad(origin_lat_deg)
     origin_lon_rad = deg_to_rad(origin_lon_deg)
@@ -145,7 +186,7 @@ def determine_destination_coords(
     # Convert radians to degrees
     dest_lat_deg = rad_to_deg(dest_lat_rad)
     dest_lon_deg = rad_to_deg(dest_lon_rad)
-    return [dest_lat_deg, dest_lon_deg]
+    return (dest_lat_deg, dest_lon_deg)
 
 def determine_square_coords(
     origin_lat_deg: float,
