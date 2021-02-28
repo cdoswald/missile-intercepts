@@ -15,6 +15,13 @@ does not take into account any of the following (for either the ballistic or int
 
 ### Sources
 
-- University of Florida Department of Mechanical & Aerospace Engineering (https://mae.ufl.edu/~uhk/ICBM.pdf)
-- MIT Department of Aeronautics and Astronautics (https://web.mit.edu/16.unified/www/FALL/systems/Lab_Notes/traj.pdf)
-- NASA Glenn Research Center (https://www.grc.nasa.gov/www/k-12/airplane/ballflght.html)
+- Trajectory Equations
+  - [University of Florida Department of Mechanical & Aerospace Engineering](https://mae.ufl.edu/~uhk/ICBM.pdf)
+  - [MIT Department of Aeronautics and Astronautics](https://web.mit.edu/16.unified/www/FALL/systems/Lab_Notes/traj.pdf)
+  - [NASA Glenn Research Center](https://www.grc.nasa.gov/www/k-12/airplane/ballflght.html)
+
+- Geodetic Equations
+  - Chris Veness, Movable-Type Scripts ([Spherical Trigonometry](https://www.movable-type.co.uk/scripts/latlong.html) and [Vector-Based Methods](https://www.movable-type.co.uk/scripts/latlong-vectors.html))
+
+- Creating 3D Models in COLLADA Format
+  - [Blender](https://www.blender.org/)
