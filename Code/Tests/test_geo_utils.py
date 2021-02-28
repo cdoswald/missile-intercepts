@@ -20,7 +20,7 @@ def test_convert_trig_to_compass_angle():
     trigonometric angle (measured counterclockwise from East) to compass angle
     (measured clockwise from North).
     """
-    conversions_dict = {
+    test_cases = {
         'degrees':[
             {'trig_angle':0, 'compass_angle':90},
             {'trig_angle':90, 'compass_angle':0},
@@ -37,7 +37,7 @@ def test_convert_trig_to_compass_angle():
         ]
     }
     errors_list = []
-    for unit, conversions_list in conversions_dict.items():
+    for unit, conversions_list in test_cases.items():
         radians_bool = (unit == 'radians')
         for conversion_dict in conversions_list:
             converted_val = geo.convert_trig_to_compass_angle(
@@ -48,6 +48,33 @@ def test_convert_trig_to_compass_angle():
                 errors_list.append('Incorrect conversion for '+
                     f'{conversion_dict["trig_angle"]} {unit}.'
                 )
+    assert not errors_list, 'Errors occurred: \n{}'.format('\n'.join(errors_list))
+
+def test_convert_latlon_to_nvector():
+    """Test that convert_latlon_to_nvector function correctly converts a 
+    latitude-longitude pair (in decimal degrees) to an orthogonal (normal)
+    vector with coordiates <x, y, z>.
+    """
+    test_cases = {
+        'North_0_East_0':{'latlon_deg':(0, 0), 'nvector':(1, 0, 0)},
+        'North_0_East_90':{'latlon_deg':(0, 90), 'nvector':(0, 1, 0)},
+        'North_0_East_180':{'latlon_deg':(0, 180), 'nvector':(-1, 0, 0)},
+        'North_0_West_90':{'latlon_deg':(0, -90), 'nvector':(0, -1, 0)},
+        'North_0_West_180':{'latlon_deg':(0, -180), 'nvector':(-1, 0, 0)},
+        'North_90_East_0':{'latlon_deg':(90, 0), 'nvector':(0, 0, 1)},
+        'South_90_East_0':{'latlon_deg':(-90, 0), 'nvector':(0, 0, -1)},
+    }
+    errors_list = []
+    for direction, conversions_dict in test_cases.items():
+        latlon_deg = conversions_dict['latlon_deg']
+        n_vector = geo.convert_latlon_to_nvector(
+            lat_deg=latlon_deg[0], lon_deg=latlon_deg[1]
+        )
+        if len(n_vector) != 3:
+            errors_list.append(f'Normal vector for test case "{direction}" '+
+                f'contains {len(n_vector)} coordinates.')
+        if tuple([round(x, 10) for x in n_vector]) != conversions_dict['nvector']:
+            errors_list.append(f'Incorrect conversion for test case "{direction}".')
     assert not errors_list, 'Errors occurred: \n{}'.format('\n'.join(errors_list))
 
 def test_calculate_great_circle_distance():
@@ -102,3 +129,4 @@ def test_calculate_great_circle_distance():
 if __name__ == '__main__':
     test_convert_trig_to_compass_angle()
     test_calculate_great_circle_distance()
+    test_convert_latlon_to_nvector()
