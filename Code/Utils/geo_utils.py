@@ -92,8 +92,8 @@ def calculate_great_circle_distance(
     origin_lat_deg: float, origin_lon_deg: float,
     dest_lat_deg: float, dest_lon_deg: float,
 ) -> float:
-    """Calculate great-circle distance in kilometers between two points using the
-    haversine formula. Source: https://www.movable-type.co.uk/scripts/latlong.html.
+    """Calculate great-circle distance between two points using the haversine 
+    formula. Source: https://www.movable-type.co.uk/scripts/latlong.html.
 
     Arguments
         origin_lat_deg: float latitude of origin location in decimal degrees
@@ -117,6 +117,33 @@ def calculate_great_circle_distance(
         + np.cos(origin_lat_rad) * np.cos(dest_lat_rad) * np.sin(delta_lon_rad/2) ** 2
     )
     ang_dist_rad = 2 * np.arctan2(np.sqrt(a), np.sqrt(1-a))
+    distance_km = EARTH_RADIUS_KM * ang_dist_rad
+    return distance_km
+
+def calculate_great_circle_distance_vec(
+    origin_lat_deg: float, origin_lon_deg: float,
+    dest_lat_deg: float, dest_lon_deg: float,
+) -> float:
+    """Calculate great-circle distance between two points using vectors. 
+    Source: https://www.movable-type.co.uk/scripts/latlong-vectors.html.
+
+    Arguments
+        origin_lat_deg: float latitude of origin location in decimal degrees
+        origin_lon_deg: float longitude of origin location in decimal degrees
+        dest_lat_deg: float latitude of destination location in decimal degrees
+        dest_lon_deg: float longitude of destination location in decimal degrees
+
+    Returns
+        distance_km: float distance in kilometers between location #1 and #2
+    """
+    # Convert lat/lon coordinates to vectors
+    origin_vector = convert_latlon_to_nvector(origin_lat_deg, origin_lon_deg)
+    dest_vector = convert_latlon_to_nvector(dest_lat_deg, dest_lon_deg)
+    # Calculate distance
+    ang_dist_rad = np.arctan2(
+        np.linalg.norm(np.cross(origin_vector, dest_vector)),
+        np.dot(origin_vector, dest_vector)
+    )
     distance_km = EARTH_RADIUS_KM * ang_dist_rad
     return distance_km
 
