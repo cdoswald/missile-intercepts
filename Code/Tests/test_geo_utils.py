@@ -51,7 +51,7 @@ def test_convert_trig_to_compass_angle():
     assert not errors_list, 'Errors occurred: \n{}'.format('\n'.join(errors_list))
 
 def test_convert_latlon_to_nvector():
-    """Test that convert_latlon_to_nvector function correctly converts a 
+    """Test that convert_latlon_to_nvector function correctly converts a
     latitude-longitude pair (in decimal degrees) to an orthogonal (normal)
     vector with coordiates <x, y, z>.
     """
@@ -126,7 +126,57 @@ def test_calculate_great_circle_distance():
                 )
     assert not errors_list, 'Errors occurred: \n{}'.format('\n'.join(errors_list))
 
+def test_calculate_great_circle_distance_vec():
+    """Test that calculate_great_circle_distance_vec function correctly 
+    calculates the great circle distance between locations in all hemispheres.
+    """
+    margin_of_error_allowed = 0.002
+    latlon_deg_dict = {
+        'Denver':[39.7392, -104.9903],
+        'Amman':[31.9539, 35.9106],
+        'Sydney':[-33.8688, 151.2093],
+        'Santiago':[-33.4489, -70.6693],
+    }
+    distances_km_dict = {
+        'Denver_to_Amman':11076,
+        'Denver_to_Sydney':13398,
+        'Denver_to_Santiago':8865,
+        'Amman_to_Denver':11076,
+        'Amman_to_Sydney':14067,
+        'Amman_to_Santiago':13289,
+        'Sydney_to_Denver':13398,
+        'Sydney_to_Amman':14067,
+        'Sydney_to_Santiago':11340,
+        'Santiago_to_Denver':8865,
+        'Santiago_to_Amman':13289,
+        'Santiago_to_Sydney':11340,
+    }
+    errors_list = []
+    for origin_city, origin_latlon_deg in latlon_deg_dict.items():
+        for dest_city, dest_latlon_deg in latlon_deg_dict.items():
+            if origin_city == dest_city:
+                continue
+            else:
+                calculated_dist_km = geo.calculate_great_circle_distance_vec(
+                    origin_lat_deg=origin_latlon_deg[0],
+                    origin_lon_deg=origin_latlon_deg[1],
+                    dest_lat_deg=dest_latlon_deg[0],
+                    dest_lon_deg=dest_latlon_deg[1],
+                )
+                route_key = f'{origin_city}_to_{dest_city}'
+                actual_dist_km = distances_km_dict[route_key]
+                margin_of_error_actual = (
+                    abs(calculated_dist_km - actual_dist_km) / actual_dist_km
+                )
+                if margin_of_error_actual > margin_of_error_allowed:
+                    errors_list.append('Calculated distance for '+
+                    f'{route_key.replace("_", " ")} exceeds a margin of error '+
+                    f'of {margin_of_error_allowed * 100}%.'
+                )
+    assert not errors_list, 'Errors occurred: \n{}'.format('\n'.join(errors_list))
+
 if __name__ == '__main__':
     test_convert_trig_to_compass_angle()
-    test_calculate_great_circle_distance()
     test_convert_latlon_to_nvector()
+    test_calculate_great_circle_distance()
+    test_calculate_great_circle_distance_vec()
