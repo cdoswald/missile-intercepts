@@ -14,6 +14,9 @@ utils_dir = os.path.join(parent_dir, 'Utils')
 sys.path.insert(0, utils_dir)
 import geo_utils as geo
 
+# Define constants
+EARTH_RADIUS_KM = 6378
+
 # Define tests
 def test_convert_trig_to_compass_angle():
     """Test that convert_trig_to_compass_angle function correctly converts 
@@ -73,7 +76,10 @@ def test_convert_latlon_to_nvector():
         if len(n_vector) != 3:
             errors_list.append(f'Normal vector for test case "{direction}" '+
                 f'contains {len(n_vector)} coordinates.')
-        if tuple([round(x, 10) for x in n_vector]) != conversions_dict['nvector']:
+        if (
+            tuple([round(x, 10) for x in n_vector]) !=
+            tuple([EARTH_RADIUS_KM * x for x in conversions_dict['nvector']])
+        ):
             errors_list.append(f'Incorrect conversion for test case "{direction}".')
     assert not errors_list, 'Errors occurred: \n{}'.format('\n'.join(errors_list))
 

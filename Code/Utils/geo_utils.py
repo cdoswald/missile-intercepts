@@ -46,42 +46,43 @@ def convert_trig_to_compass_angle(trig_angle: float, radians: bool = True):
         compass_angle = (90 - trig_angle) % 360
     return compass_angle
 
-def convert_latlon_to_nvector(lat_deg: float, lon_deg: float,
+def convert_latlon_to_nvector(lat_deg: float, lon_deg: float, alt_km: float = 0.0,
 ) -> Tuple[float, float, float]:
-    """Convert a latitude-longitude pair (in decimal degrees) to an orthogonal
-    (normal) vector <x, y, z>. Note: right-handed coordinate system is used
-    (e.g., positive x-axis points toward 0 degrees North, 0 degrees East;
-    positive y-axis points toward 0 degrees North, 90 degrees East;
-    positive z-axis points toward 90 degrees North).
+    """Convert a point with latitude/longitude (decimal degrees) and altitude
+    (kilometers) to an orthogonal (normal) vector <x, y, z>. Note: right-handed
+    coordinate system is used (e.g., positive x-axis points toward 0 degrees
+    North, 0 degrees East; positive y-axis points toward 0 degrees North, 90
+    degrees East; positive z-axis points toward 90 degrees North).
     Source: https://www.movable-type.co.uk/scripts/latlong-vectors.html.
 
     Arguments
         lat_deg: latitude in decimal degrees
         lon_deg: longitude in decimal degrees
+        alt_km: altitude in kilometers (measured from ground level)
 
     Returns
         n_vector: orthogonal vector <x, y, z>
     """
     lat_rad, lon_rad = deg_to_rad(lat_deg), deg_to_rad(lon_deg)
-    x = np.cos(lat_rad) * np.cos(lon_rad)
-    y = np.cos(lat_rad) * np.sin(lon_rad)
-    z = np.sin(lat_rad)
+    x = (EARTH_RADIUS_KM + alt_km) * np.cos(lat_rad) * np.cos(lon_rad)
+    y = (EARTH_RADIUS_KM + alt_km) * np.cos(lat_rad) * np.sin(lon_rad)
+    z = (EARTH_RADIUS_KM + alt_km) * np.sin(lat_rad)
     return (x, y, z)
 
 def convert_nvector_to_latlon(nvector: Tuple[float, float, float],
 ) -> Tuple[float, float]:
-    """Convert an orthogonal (normal) vector <x, y, z> to a latitude-longitude
-    pair (in decimal degrees). Note: right-handed coordinate system is used
-    (e.g., positive x-axis points toward 0 degrees North, 0 degrees East;
-    positive y-axis points toward 0 degrees North, 90 degrees East;
-    positive z-axis points toward 90 degrees North).
+    """Convert an orthogonal (normal) vector <x, y, z> to latitude/longitude
+    (decimal degrees). Note: right-handed coordinate system is used (e.g.,
+    positive x-axis points toward 0 degrees North, 0 degrees East; positive
+    y-axis points toward 0 degrees North, 90 degrees East; positive z-axis
+    points toward 90 degrees North).
     Source: https://www.movable-type.co.uk/scripts/latlong-vectors.html.
 
     Arguments
         nvector: orthogonal vector <x, y, z>
 
     Returns
-        latlon: tuple containing latitude and longitude in decimal degrees
+        (lat_deg, lon_deg): tuple containing latitude/longitude (decimal degrees)
     """
     x, y, z = nvector[0], nvector[1], nvector[2]
     lat_deg = rad_to_deg(np.arctan2(z, np.sqrt(x**2 + y**2)))
@@ -92,7 +93,7 @@ def calculate_great_circle_distance(
     origin_lat_deg: float, origin_lon_deg: float,
     dest_lat_deg: float, dest_lon_deg: float,
 ) -> float:
-    """Calculate great-circle distance between two points using the haversine 
+    """Calculate great-circle distance between two points using the haversine
     formula. Source: https://www.movable-type.co.uk/scripts/latlong.html.
 
     Arguments
@@ -124,7 +125,7 @@ def calculate_great_circle_distance_vec(
     origin_lat_deg: float, origin_lon_deg: float,
     dest_lat_deg: float, dest_lon_deg: float,
 ) -> float:
-    """Calculate great-circle distance between two points using vectors. 
+    """Calculate great-circle distance between two points using vectors.
     Source: https://www.movable-type.co.uk/scripts/latlong-vectors.html.
 
     Arguments
