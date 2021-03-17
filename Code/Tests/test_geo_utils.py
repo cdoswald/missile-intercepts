@@ -53,8 +53,8 @@ def test_convert_trig_to_compass_angle():
                 )
     assert not errors_list, 'Errors occurred: \n{}'.format('\n'.join(errors_list))
 
-def test_convert_latlon_to_nvector():
-    """Test that convert_latlon_to_nvector function correctly converts a
+def test_convert_lat_lon_alt_to_nvector():
+    """Test that convert_lat_lon_alt_to_nvector function correctly converts a
     latitude-longitude pair (in decimal degrees) to an orthogonal (normal)
     vector with coordiates <x, y, z>.
     """
@@ -70,7 +70,7 @@ def test_convert_latlon_to_nvector():
     errors_list = []
     for direction, conversions_dict in test_cases.items():
         latlon_deg = conversions_dict['latlon_deg']
-        n_vector = geo.convert_latlon_to_nvector(
+        n_vector = geo.convert_lat_lon_alt_to_nvector(
             lat_deg=latlon_deg[0], lon_deg=latlon_deg[1]
         )
         if len(n_vector) != 3:
@@ -83,6 +83,28 @@ def test_convert_latlon_to_nvector():
             errors_list.append(f'Incorrect conversion for test case "{direction}".')
     assert not errors_list, 'Errors occurred: \n{}'.format('\n'.join(errors_list))
 
+def test_calculate_magnitude_dist_bt_vectors():
+    """Test that calculate_magnitude_dist_bt_vectors function correctly calculates
+    the magnitude of the Euclidean distance between two vectors in R3.
+    """
+    test_cases = {
+        'test1':{'vec1':(0, 0, 0), 'vec2':(0, 0, 0), 'magnitude_dist':0},
+        'test2':{'vec1':(1, 1, 1), 'vec2':(0, 0, 0), 'magnitude_dist':np.sqrt(3)},
+        'test3':{'vec1':(0, 0, 0), 'vec2':(3, 2, 1), 'magnitude_dist':np.sqrt(14)},
+        'test4':{'vec1':(2, 3, 4), 'vec2':(4, 5, 6), 'magnitude_dist':np.sqrt(12)},
+        'test5':{'vec1':(-1, -1, -1), 'vec2':(0, 0, 0), 'magnitude_dist':np.sqrt(3)},
+        'test6':{'vec1':(0, 0, 0), 'vec2':(-3, -2, -1), 'magnitude_dist':np.sqrt(14)},
+        'test7':{'vec1':(-2, -3, -4), 'vec2':(-4, -5, -6), 'magnitude_dist':np.sqrt(12)},
+    }
+    errors_list = []
+    for test_num, vectors_dict in test_cases.items():
+        calculated_dist = geo.calculate_magnitude_dist_bt_vectors(
+            vectors_dict['vec1'], vectors_dict['vec2'],
+        )
+        if calculated_dist != vectors_dict['magnitude_dist']:
+            errors_list.append(f'Incorrect distance magnitude calculation for {test_num}.')
+    assert not errors_list, 'Errors occurred: \n{}'.format('\n'.join(errors_list))
+    
 def test_calculate_great_circle_distance():
     """Test that calculate_great_circle_distance function correctly 
     calculates the great circle distance between locations in all hemispheres.
@@ -183,6 +205,7 @@ def test_calculate_great_circle_distance_vec():
 
 if __name__ == '__main__':
     test_convert_trig_to_compass_angle()
-    test_convert_latlon_to_nvector()
+    test_convert_lat_lon_alt_to_nvector()
+    test_calculate_magnitude_dist_bt_vectors()
     test_calculate_great_circle_distance()
     test_calculate_great_circle_distance_vec()
