@@ -507,10 +507,8 @@ class TerminalPhaseInterceptor(Missile):
                 #TODO: create green KML range indicating within range
                 pass
         self.intercept_seconds_after_TM_launch = self.compute_intercept_time()
-        
-        
-        #TODO: change update_current_position to 
-        
+        self.intercept_position_dict = self.compute_intercept_position()
+        self.intercept_surface_to_air_dist_km = self.compute_intercept_surface_to_air_distance()
         
         if self.initial_launch_vel_km_per_sec:
             pass
@@ -535,3 +533,32 @@ class TerminalPhaseInterceptor(Missile):
                 / self.targeted_missile.horiz_vel_km_per_sec
             )
             return intercept_seconds_after_TM_launch
+        else:
+            pass
+
+    def compute_intercept_position(self) -> float:
+        """Compute the latitude, longitude, and altitude of intercept location."""
+        if self.intercept_seconds_after_TM_launch:
+            intercept_position_dict = self.targeted_missile.get_current_position(
+                elapsed_time_sec=self.intercept_seconds_after_TM_launch
+            )
+            return intercept_position_dict
+        else:
+            pass
+
+    def compute_intercept_surface_to_air_distance(self) -> float:
+        """Compute the straight-line distance between interceptor launch
+        point and intercept location."""
+        interceptor_LP_vector = geo.convert_lat_lon_alt_to_nvector(
+            lat_deg=self.LP_latlon_deg[0],
+            lon_deg=self.LP_latlon_deg[1],
+        )
+        intercept_position_vector = geo.convert_lat_lon_alt_to_nvector(
+            lat_deg=self.intercept_position_dict['lat_deg'],
+            lon_deg=self.intercept_position_dict['lon_deg'],
+            alt_km=self.intercept_position_dict['alt_km'],
+        )
+        intercept_surface_to_air_dist_km = geo.calculate_magnitude_dist_bt_vectors(
+            interceptor_LP_vector, intercept_position_vector,
+        )
+        return intercept_surface_to_air_dist_km
