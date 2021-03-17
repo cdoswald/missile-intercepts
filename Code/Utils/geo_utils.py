@@ -46,7 +46,7 @@ def convert_trig_to_compass_angle(trig_angle: float, radians: bool = True):
         compass_angle = (90 - trig_angle) % 360
     return compass_angle
 
-def convert_latlon_to_nvector(lat_deg: float, lon_deg: float, alt_km: float = 0.0,
+def convert_lat_lon_alt_to_nvector(lat_deg: float, lon_deg: float, alt_km: float = 0.0,
 ) -> Tuple[float, float, float]:
     """Convert a point with latitude/longitude (decimal degrees) and altitude
     (kilometers) to an orthogonal (normal) vector <x, y, z>. Note: right-handed
@@ -69,7 +69,7 @@ def convert_latlon_to_nvector(lat_deg: float, lon_deg: float, alt_km: float = 0.
     z = (EARTH_RADIUS_KM + alt_km) * np.sin(lat_rad)
     return (x, y, z)
 
-def convert_nvector_to_latlon(nvector: Tuple[float, float, float],
+def convert_nvector_to_lat_lon(nvector: Tuple[float, float, float],
 ) -> Tuple[float, float]:
     """Convert an orthogonal (normal) vector <x, y, z> to latitude/longitude
     (decimal degrees). Note: right-handed coordinate system is used (e.g.,
@@ -88,6 +88,22 @@ def convert_nvector_to_latlon(nvector: Tuple[float, float, float],
     lat_deg = rad_to_deg(np.arctan2(z, np.sqrt(x**2 + y**2)))
     lon_deg = rad_to_deg(np.arctan2(y, x))
     return (lat_deg, lon_deg)
+
+def calculate_magnitude_dist_bt_vectors(
+    vector1: Tuple[float, float, float],
+    vector2: Tuple[float, float, float],
+) -> float:
+    """Calculate the magnitude of the Euclidean distance between two vectors
+    in R3.
+
+    Arguments
+        vector1: first vector with components <x, y, z>
+        vector2: second vector with components <x, y, z>
+    """
+    squared_dist = 0
+    for i in np.arange(len(vector1)):
+        squared_dist += (vector2[i] - vector1[i])**2
+    return np.sqrt(squared_dist)
 
 def calculate_great_circle_distance(
     origin_lat_deg: float, origin_lon_deg: float,
@@ -138,8 +154,8 @@ def calculate_great_circle_distance_vec(
         distance_km: float distance in kilometers between location #1 and #2
     """
     # Convert lat/lon coordinates to vectors
-    origin_vector = convert_latlon_to_nvector(origin_lat_deg, origin_lon_deg)
-    dest_vector = convert_latlon_to_nvector(dest_lat_deg, dest_lon_deg)
+    origin_vector = convert_lat_lon_alt_to_nvector(origin_lat_deg, origin_lon_deg)
+    dest_vector = convert_lat_lon_alt_to_nvector(dest_lat_deg, dest_lon_deg)
     # Calculate distance
     ang_dist_rad = np.arctan2(
         np.linalg.norm(np.cross(origin_vector, dest_vector)),
