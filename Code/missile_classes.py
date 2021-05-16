@@ -55,12 +55,13 @@ class Missile(ABC):
 
     @abstractmethod
     def get_current_position(self, elapsed_time_sec: float) -> None:
-        """Compute current latitude, longitude, altitude, bearing (heading), 
-        and tilt based on elapsed time."""
-        
+        """Get the latitude, longitue, and altitude of current position 
+        based on elapsed time."""
+
     @abstractmethod
-    def set_aimpoint(self) -> None:
-        """Set aimpoint latitude and longitude."""
+    def get_current_orientation(self, elapsed_time_sec: float) -> None:
+        """Get the heading, tilt, and roll for current position based on 
+        elapsed time."""
     
     @abstractmethod
     def set_horizontal_velocity(self) -> None:
@@ -73,6 +74,10 @@ class Missile(ABC):
     @abstractmethod
     def set_initial_launch_angle(self) -> None:
         """Compute and set initial launch angle (degrees)."""
+
+    @abstractmethod
+    def set_aimpoint(self) -> None:
+        """Set aimpoint latitude and longitude."""
 
     def set_launchpoint(
         self,
@@ -194,6 +199,7 @@ class BallisticMissile(Missile):
         AP_lat_deg: Optional[float] = None,
         AP_lon_deg: Optional[float] = None,
         time_to_target_sec: Optional[float] = None,
+        intercept_ground_dist_from_TMAP_km: Optional[float] = None,
         collada_model_link: str = "../COLLADA/test_collada.dae",
         collada_model_scale: float = 200,
     ) -> None:
@@ -212,9 +218,11 @@ class BallisticMissile(Missile):
         super(BallisticMissile, self).__init__(LP_lat_deg, LP_lon_deg)
         self.AP_latlon_deg = (AP_lat_deg, AP_lon_deg)
         self.time_to_target_sec = time_to_target_sec
+        self.intercept_ground_dist_from_TMAP_km = intercept_ground_dist_from_TMAP_km
         self.collada_model_link = collada_model_link
         self.collada_model_scale = collada_model_scale
-
+        self.intercept_seconds_after_launch = None
+            
     def build(self) -> None:
         """Set all initial launch parameters for missile."""
         if not self.LP_latlon_deg or None in self.LP_latlon_deg:
@@ -235,18 +243,23 @@ class BallisticMissile(Missile):
         self.set_initial_vertical_velocity()
         self.set_initial_launch_velocity()
         self.set_initial_launch_angle()
+        self.set_intercept_time()
 
     def launch(self, timestep_sec: float = 1) -> None:
-        """Record missile position (latitude, longitude, altitude, bearing)
-        for each timestep from launch until impact.
+        """Record missile position (latitude, longitude, altitude) and orientation
+        (heading, tilt, and roll) for each timestep from launch until impact.
         
         Arguments
             timestep_sec: Timestep interval in seconds
         """
         traj_dict = OrderedDict()
+        if self.intercept_seconds_after_launch is not None:
+            stop_time = self.intercept_seconds_after_launch
+        else:
+            stop_time = self.time_to_target_sec
         for elapsed_time_sec in np.arange(
             start=0,
-            stop=self.time_to_target_sec + timestep_sec,
+            stop=stop_time + timestep_sec,
             step=timestep_sec,
         ):
             position_dict = self.get_current_position(elapsed_time_sec)
@@ -258,10 +271,7 @@ class BallisticMissile(Missile):
             .rename(columns={'index':'time_sec'})
         )
 
-    def get_current_position(
-        self,
-        elapsed_time_sec: float,
-    ) -> Dict[str, float]:
+    def get_current_position(self, elapsed_time_sec: float) -> Dict[str, float]:
         """Get the latitude, longitue, and altitude of current position 
         based on elapsed time.
 
@@ -286,10 +296,7 @@ class BallisticMissile(Missile):
         }
         return current_position_dict
 
-    def get_current_orientation(
-        self,
-        elapsed_time_sec: float,
-    ) -> Dict[str, float]:
+    def get_current_orientation(self, elapsed_time_sec: float) -> Dict[str, float]:
         """Get the heading, tilt, and roll for current position based on 
         elapsed time.
 
@@ -405,6 +412,17 @@ class BallisticMissile(Missile):
         print('Initial launch angle is '+
               f'{round(self.initial_launch_angle_deg, 2)} degrees.')
 
+    def set_intercept_time(self) -> None:
+        """Compute and set the time of intercept in seconds after launch, 
+        given intercept distance from targeted missile aimpoint (TMAP)."""
+        if self.intercept_ground_dist_from_TMAP_km is not None:
+            self.intercept_seconds_after_launch = (
+                (self.dist_to_target_km - self.intercept_ground_dist_from_TMAP_km)
+                / self.horiz_vel_km_per_sec
+            )
+        else:
+            self.intercept_seconds_after_launch = None
+
     def compute_current_vertical_velocity(self, elapsed_time_sec: float) -> float:
         """Compute vertical velocity (km/s) given elapsed time in seconds.
         
@@ -456,12 +474,14 @@ class TerminalPhaseInterceptor(Missile):
     
     def __init__(
         self,
-        LP_lat_deg: Optional[float] = None,
-        LP_lon_deg: Optional[float] = None,
+        IMLP_lat_deg: Optional[float] = None,
+        IMLP_lon_deg: Optional[float] = None,
         targeted_missile: Optional[Type[BallisticMissile]] = None,
         max_ground_range_km: Optional[float] = None,
-        intercept_dist_from_TMAP_km: Optional[float] = None,
+        intercept_ground_dist_from_TMAP_km: Optional[float] = None,
         initial_launch_vel_km_per_sec: Optional[float] = None,
+        collada_model_link: str = "../COLLADA/test_collada.dae",
+        collada_model_scale: float = 200,
     ) -> None:
         """Instantiate TerminalPhaseInterceptor class.
         
@@ -475,12 +495,27 @@ class TerminalPhaseInterceptor(Missile):
             initial_launch_vel_km_per_sec: initial launch velocity of interceptor,
                 in the direction of initial launch angle (kilometers per second)
         """
-        super(TerminalPhaseInterceptor, self).__init__(LP_lat_deg, LP_lon_deg)
+        super(TerminalPhaseInterceptor, self).__init__(IMLP_lat_deg, IMLP_lon_deg)
+#        import pdb; pdb.set_trace()
         self.targeted_missile = targeted_missile
         self.max_ground_range_km = max_ground_range_km
-        self.intercept_dist_from_TMAP_km = intercept_dist_from_TMAP_km
+        self.intercept_ground_dist_from_TMAP_km = intercept_ground_dist_from_TMAP_km
         self.initial_launch_vel_km_per_sec = initial_launch_vel_km_per_sec
-        
+        self.collada_model_link = collada_model_link
+        self.collada_model_scale = collada_model_scale
+        self.AP_latlon_deg = None
+        self.intercept_ground_dist_from_IMLP_km = None
+        self.intercept_seconds_after_TM_launch = None
+        self.intercept_position_dict = None
+        self.intercept_surface_to_air_dist_km = None
+        self.intercept_launch_time_seconds = None
+        self.intercept_flight_time_seconds = None
+        self.horiz_vel_km_per_sec = None
+        self.launchpoint_initial_bearing_deg = None
+        self.initial_launch_angle_deg = None
+        self.trajectory_data = None
+        self.kml_trajectory = None
+
     def determine_missile_in_ground_range(self) -> bool:
         """If max range set, determine if targeted missile trajectory 
         is within ground range of interceptor at any point prior to impact."""
@@ -492,62 +527,171 @@ class TerminalPhaseInterceptor(Missile):
             cross_lat_deg=self.LP_latlon_deg[0],
             cross_lon_deg=self.LP_latlon_deg[1],
             )
-        return self.max_ground_range >= min_ground_dist_to_TM_traj_km
+        if self.max_ground_range >= min_ground_dist_to_TM_traj_km:
+            #TODO: create green KML polygon indicating within range
+            return True
+        else:
+            #TODO: create red KML polygon indicating out of range
+            return False
 
-    def determine_intercept_condition(self) -> None:
-        """Determine intercept criteria based on specified inputs."""
-        if self.max_ground_range_km:
-            if not self.determine_missile_in_ground_range:
-                print('Targeted missile trajectory is out of '+
-                      f'{self.max_ground_range_km} km ground range '+
-                      'of interceptor.')
-                #TODO: create red KML range indicating out of range
-                return
-            else:
-                #TODO: create green KML range indicating within range
-                pass
-        self.intercept_seconds_after_TM_launch = self.compute_intercept_time()
-        self.intercept_position_dict = self.compute_intercept_position()
-        self.intercept_surface_to_air_dist_km = self.compute_intercept_surface_to_air_distance()
+    def build(self) -> None:
+        """Set all initial launch parameters for interceptor missile."""
+        if not self.determine_missile_in_ground_range:
+            print('Targeted missile trajectory is out of interceptor\'s '+
+                  f'{self.max_ground_range_km} km ground range.')
+        else:
+            self.set_intercept_time()
+            self.set_intercept_position()
+            self.set_aimpoint()
+            self.set_intercept_ground_dist_from_IMLP()
+            self.set_intercept_surface_to_air_distance()
+            self.set_intercept_flight_time()
+            self.set_intercept_launch_time()
+            self.set_horizontal_velocity()
+            self.set_launchpoint_bearing()
+            self.set_initial_launch_angle()
+            
+    def launch(self, timestep_sec: float = 1) -> None:
+        """Record missile position (latitude, longitude, altitude) and orientation
+        (heading, tilt, and roll) for each timestep from launch until impact.
         
-        if self.initial_launch_vel_km_per_sec:
-            pass
-            #TODO: compute possible impact locations, add criteria for
-            # selecting possible locations (e.g., farthest from aimpoint)
-        elif self.intercept_dist_from_ballistic_AP_km:
-            pass
-            #TODO: Determine BallisticMissile location/altitude given
-            # distance from aimpoint
-        else:
-            pass
-            #TODO: select criteria if no user input
-
-    def compute_intercept_time(self) -> float:
-        """Compute the time of intercept in seconds after targeted missile (TM)
-        launch, given intercept distance from targeted missile aimpoint (TMAP).
+        Arguments
+            timestep_sec: Timestep interval in seconds
         """
-        if self.intercept_dist_from_TMAP_km:
-            intercept_seconds_after_TM_launch = (
-                (self.targeted_missile.dist_to_target_km 
-                 - self.intercept_dist_from_TMAP_km)
-                / self.targeted_missile.horiz_vel_km_per_sec
-            )
-            return intercept_seconds_after_TM_launch
-        else:
-            pass
+        traj_dict = OrderedDict()
+        for elapsed_time_sec in np.arange(
+            start=0,
+            stop=self.intercept_seconds_after_TM_launch + timestep_sec,
+            step=timestep_sec,
+        ):
+            position_dict = self.get_current_position(elapsed_time_sec)
+            orientation_dict = self.get_current_orientation(elapsed_time_sec)
+            traj_dict[elapsed_time_sec] = {**position_dict, **orientation_dict}
+        self.trajectory_data = (
+            pd.DataFrame.from_dict(traj_dict, orient='index')
+            .reset_index()
+            .rename(columns={'index':'time_sec'})
+        )
 
-    def compute_intercept_position(self) -> float:
-        """Compute the latitude, longitude, and altitude of intercept location."""
-        if self.intercept_seconds_after_TM_launch:
-            intercept_position_dict = self.targeted_missile.get_current_position(
-                elapsed_time_sec=self.intercept_seconds_after_TM_launch
-            )
-            return intercept_position_dict
-        else:
-            pass
+    def get_current_position(self, elapsed_time_sec: float) -> Dict[str, float]:
+        """Get the latitude, longitude, and altitude of current position 
+        based on elapsed time.
 
-    def compute_intercept_surface_to_air_distance(self) -> float:
-        """Compute the straight-line distance between interceptor launch
+        Arguments
+            elapsed_time_sec: elapsed time since targeted missile launch (seconds)
+        """
+        # Calculate elapsed time of interceptor flight
+        interceptor_flight_elapsed_time_sec = max(
+            elapsed_time_sec - self.intercept_launch_time_seconds, 0
+        )
+        # Calculate latitude/longitude
+        current_latlon_deg = geo.determine_destination_coords(
+            origin_lat_deg=self.LP_latlon_deg[0],
+            origin_lon_deg=self.LP_latlon_deg[1],
+            distance_km=(self.horiz_vel_km_per_sec * interceptor_flight_elapsed_time_sec),
+            initial_bearing_deg=self.launchpoint_initial_bearing_deg,
+        )
+        # Calculate altitude
+        current_altitude_km = (
+            self.intercept_position_dict['alt_km'] / self.intercept_flight_time_seconds
+            * interceptor_flight_elapsed_time_sec
+        )
+        current_position_dict = {
+            'lat_deg':current_latlon_deg[0],
+            'lon_deg':current_latlon_deg[1],
+            'alt_km':current_altitude_km,
+        }
+        return current_position_dict
+
+    def get_current_orientation(self, elapsed_time_sec: float) -> Dict[str, float]:
+        """Get the heading, tilt, and roll for current position based on 
+        elapsed time.
+
+        Arguments
+            elapsed_time_sec: elapsed time since launch (seconds)
+        """
+        current_position_dict = self.get_current_position(elapsed_time_sec)
+        current_bearing_deg = self.compute_current_bearing(
+            position_lat_deg=current_position_dict['lat_deg'],
+            position_lon_deg=current_position_dict['lon_deg'],
+        )
+        current_tilt_deg = geo.convert_trig_to_compass_angle(
+            trig_angle=self.initial_launch_angle_deg,
+            radians=False,
+        )
+        current_orientation_dict = {
+            'bearing_deg':current_bearing_deg,
+            'tilt_deg':current_tilt_deg,
+            'roll_deg':0,
+        }
+        return current_orientation_dict
+    
+#    def compute_current_vertical_velocity(self, elapsed_time_sec: float) -> float:
+#        """Compute vertical velocity (km/s) given elapsed time in seconds since
+#        targeted missile launch.
+#        
+#        Arguments
+#            elapsed_time_sec: Elapsed time since launch (in seconds)
+#        """
+#        if self.initial_vert_vel_km_per_sec is None:
+#            self.set_initial_vertical_velocity()
+#        current_vert_vel_km_per_sec = (
+#            self.initial_vert_vel_km_per_sec 
+#            + GRAVITY_ACCEL_KM_PER_S2 * elapsed_time_sec
+#        )
+#        return current_vert_vel_km_per_sec
+
+    def set_initial_launch_velocity(
+        self,
+        initial_launch_vel_km_per_sec: float,
+    ) -> None:
+        """Compute and set initial launch velocity (km/sec) after instantiation."""
+        self.initial_launch_vel_km_per_sec = initial_launch_vel_km_per_sec
+
+    def set_intercept_time(self) -> None:
+        """Compute and set the time of intercept in seconds after targeted missile (TM)
+        launch, given intercept distance from targeted missile aimpoint (TMAP)."""
+        self.intercept_seconds_after_TM_launch = (
+            (self.targeted_missile.dist_to_target_km - self.intercept_ground_dist_from_TMAP_km)
+            / self.targeted_missile.horiz_vel_km_per_sec
+        )
+
+    def set_intercept_position(self) -> None:
+        """Compute and set the latitude, longitude, and altitude of intercept location."""            
+        self.intercept_position_dict = self.targeted_missile.get_current_position(
+            elapsed_time_sec=self.intercept_seconds_after_TM_launch
+        )
+
+    def set_aimpoint(self) -> None:
+        """Set aimpoint latitude and longitude."""
+        self.AP_latlon_deg = [
+            self.intercept_position_dict['lat_deg'],
+            self.intercept_position_dict['lon_deg']
+        ]
+
+    def set_initial_launch_angle(self) -> None:
+        """Compute and set initial launch angle (degrees)."""
+        self.initial_launch_angle_deg = geo.rad_to_deg(
+            np.arccos(
+                self.intercept_ground_dist_from_IMLP_km 
+                / self.intercept_surface_to_air_dist_km
+            )
+        )
+        print('Initial launch angle is '+
+              f'{round(self.initial_launch_angle_deg, 2)} degrees.')
+
+    def set_intercept_ground_dist_from_IMLP(self) -> None:
+        """Compute and set the ground distance in kilometers from the interceptor
+        missile launch point (IMLP) to the point of intercept."""
+        self.intercept_ground_dist_from_IMLP_km = geo.calculate_great_circle_distance(
+            origin_lat_deg=self.LP_latlon_deg[0],
+            origin_lon_deg=self.LP_latlon_deg[1],
+            dest_lat_deg=self.intercept_position_dict['lat_deg'],
+            dest_lon_deg=self.intercept_position_dict['lon_deg'],
+        )
+
+    def set_intercept_surface_to_air_distance(self) -> None:
+        """Compute and set the straight-line distance between interceptor launch
         point and intercept location."""
         interceptor_LP_vector = geo.convert_lat_lon_alt_to_nvector(
             lat_deg=self.LP_latlon_deg[0],
@@ -558,7 +702,38 @@ class TerminalPhaseInterceptor(Missile):
             lon_deg=self.intercept_position_dict['lon_deg'],
             alt_km=self.intercept_position_dict['alt_km'],
         )
-        intercept_surface_to_air_dist_km = geo.calculate_magnitude_dist_bt_vectors(
+        self.intercept_surface_to_air_dist_km = geo.calculate_magnitude_dist_bt_vectors(
             interceptor_LP_vector, intercept_position_vector,
         )
-        return intercept_surface_to_air_dist_km
+    
+    def set_intercept_flight_time(self) -> None:
+        """Compute and set total flight time for interceptor missile (seconds)."""
+        self.intercept_flight_time_seconds = (
+            self.intercept_surface_to_air_dist_km / self.initial_launch_vel_km_per_sec
+        )
+
+    def set_intercept_launch_time(self) -> None:
+        """Compute and set launch time of interceptor missile based on 
+        distance to intercept point and interceptor launch velocity."""
+        self.intercept_launch_time_seconds = ( #TODO: this isn't correct; should be intercept flight time, not launch time
+            self.intercept_seconds_after_TM_launch - self.intercept_flight_time_seconds
+        )
+
+    def set_horizontal_velocity(self) -> None:
+        """Compute and set horizontal velocity (km/sec).
+        Note that horizontal velocity is constant over entire trajectory."""
+        self.horiz_vel_km_per_sec = (
+            self.intercept_ground_dist_from_IMLP_km / self.intercept_flight_time_seconds
+        )
+
+    def create_kml_trajectory(self) -> None:
+        """Create missile trajectory in KML format."""
+        kml_trajectory_sim = KMLTrajectorySim(
+            data=self.trajectory_data,
+            collada_model_link=self.collada_model_link,
+            collada_model_scale=self.collada_model_scale,
+        )
+        kml_trajectory_sim.create_trajectory()
+        self.kml_trajectory = kml_trajectory_sim.kml
+        
+#TODO: find out why Missile 1 isn't being intercepted at proper time  (on correct trajectory; interceptor not moving quickly enough, launching early enough)
