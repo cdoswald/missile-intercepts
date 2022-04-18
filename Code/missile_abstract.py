@@ -122,7 +122,7 @@ class Missile(ABC):
             position_latlon_deg: tuple of missile's latitude, longitude (degrees)
 
         Returns
-            bearing (degrees)
+            bearing from position to aimpoint (degrees, clockwise from North)
         """
         return geo.calculate_initial_bearing(
             position_latlon_deg[0], position_latlon_deg[1],
@@ -166,4 +166,5 @@ class Missile(ABC):
         return geo.rad_to_deg(np.arctan(
             vertical_velocity_km_sec / horizontal_velocity_km_sec
         ))
+
         return current_bearing_deg
