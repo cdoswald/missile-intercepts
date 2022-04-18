@@ -8,6 +8,8 @@ Contents:
     Private classes:
 
 """
+#TODO: verify initial launch velocity less than Earth escape velocity
+
 # Import packages
 from collections import OrderedDict
 from typing import Dict, Optional, Tuple, Type
@@ -117,15 +119,16 @@ class BallisticMissile(Missile):
         params: dict of user-defined parameter values
         LP_latlon_deg: tuple of launchpoint (latitude, longitude) in degrees
         AP_latlon_deg: tuple of aimpoint (latitutde, longitude) in degrees
-        static_data: dict of static characteristics of ballistic missile
-        trajectory_data:
+        build_data: dict of static characteristics of ballistic missile
+        trajectory_data: dict of position/orientation data of ballistic missile
     
     Methods:
         build
         launch
-        compute_initial_vertical_velocity
         get_current_position
         get_current_orientation
+        compute_initial_vertical_velocity
+        compute_current_vertical_velocity
     """
 
     def __init__(
@@ -138,11 +141,11 @@ class BallisticMissile(Missile):
         self.params = params
         self.LP_latlon_deg = LP_latlon_deg
         self.AP_latlon_deg = AP_latlon_deg
-        self.static_data = None
+        self.build_data = None
         self.trajectory_data = None
 
     def build(self) -> None:
-        """Compute all static characteristics of ballistic missile:
+        """Compute static characteristics of ballistic missile:
             - Launchpoint distance to target (km)
             - Launchpoint bearing (deg)
             - Total time-to-target (seconds)
@@ -166,7 +169,7 @@ class BallisticMissile(Missile):
             self.params['horizontal_velocity_km_sec'],
             initial_vertical_velocity_km_sec,
         )
-        self.static_data = {
+        self.build_data = {
             'launchpoint_dist_to_target_km':dist_to_target_km,
             'launchpoint_bearing_deg':self.compute_bearing(self.LP_latlon_deg),
             'total_time_to_target_sec':time_to_target_sec,
@@ -176,103 +179,88 @@ class BallisticMissile(Missile):
             'initial_launch_angle_deg':initial_launch_angle_deg,
         }
 
-    def launch(self, timestep_sec: float = 1) -> None:
+    def launch(self, stoptime_sec: float, timestep_sec: float = 1) -> None:
         """Record missile position (latitude, longitude, altitude) and orientation
         (heading, tilt, and roll) for each timestep from launch until impact.
         
         Arguments
-            timestep_sec: Timestep interval in seconds
+            stoptime_sec: maximum time (seconds) for which to calculate missile
+                position and orientation
+            timestep_sec: timestep interval (seconds)
         """
         traj_dict = OrderedDict()
-        if self.intercept_seconds_after_launch is not None:
-            stop_time = self.intercept_seconds_after_launch
-        else:
-            stop_time = self.time_to_target_sec
         for elapsed_time_sec in np.arange(
             start=0,
-            stop=stop_time + timestep_sec,
+            stop=stoptime_sec + timestep_sec,
             step=timestep_sec,
         ):
             position_dict = self.get_current_position(elapsed_time_sec)
             orientation_dict = self.get_current_orientation(elapsed_time_sec)
             traj_dict[elapsed_time_sec] = {**position_dict, **orientation_dict}
-        self.trajectory_data = (
-            pd.DataFrame.from_dict(traj_dict, orient='index')
-            .reset_index()
-            .rename(columns={'index':'time_sec'})
-        )
-            
-#TODO: verify initial launch velocity less than Earth escape velocity
+        self.trajectory_data = traj_dict
 
-    def compute_initial_vertical_velocity(self, time_to_target_sec: float) -> float:
-        """Compute initial vertical velocity (km/sec) as time-to-apogee (seconds)
-        multiplied by gravitational acceleration (km/sec^2).
-
-        Arguments:
-            time_to_target_sec: missile time-to-target (seconds)
-        """
-        time_to_apogee_sec = time_to_target_sec * 0.5
-        initial_vertical_velocity_km_sec = (
-            time_to_apogee_sec * abs(constants['GRAVITY_ACCEL_KM_PER_S2'])
-        )
-        return initial_vertical_velocity_km_sec
-
-        
-
-    def get_current_position(self, elapsed_time_sec: float) -> Dict:
-        """Compute the latitude, longitue, and altitude of missile's current 
-        position based on elapsed time since launch (seconds).
+    def get_current_position(
+        self,
+        elapsed_time_sec: float,
+        horizontal_velocity_km_sec: float,
+        initial_vertical_velocity_km_sec: float,
+        launchpoint_bearing_deg: float,
+    ) -> Dict:
+        """Compute the current latitude/longitude (degrees) and altitude (km)
+        of missile based on elapsed time since launch (seconds).
 
         Arguments
             elapsed_time_sec: elapsed time since launch (seconds)
+            horizontal_velocity_km_sec: horizontal velocity (km/s)
+            initial_vertical_velocity_km_sec: vertical velocity at time of launch (km/s)
+            launchpoint_bearing_deg: bearing from launchpoint to aimpoint (degrees)
 
         Returns
             dict containing lat_deg, lon_deg, and alt_km
         """
-        dist_km = self.static_data['horizontal_velocity_km_sec'] * elapsed_time_sec
+        dist_km = horizontal_velocity_km_sec * elapsed_time_sec
         current_latlon_deg = geo.determine_destination_coords(
             origin_lat_deg=self.LP_latlon_deg[0],
             origin_lon_deg=self.LP_latlon_deg[1],
             distance_km=dist_km,
-            initial_bearing_deg=self.static_data['initial_bearing_deg'],
+            initial_bearing_deg=launchpoint_bearing_deg,
         )
         # Integrate vertical velocity formula
         current_altitude_km = ( 
-            self.static_data['initial_vertical_velocity_km_sec'] * elapsed_time_sec
+            initial_vertical_velocity_km_sec * elapsed_time_sec
             + (0.5 * constants['GRAVITY_ACCEL_KM_PER_S2'] * elapsed_time_sec**2)
-        ) 
+        )
         return {
             'lat_deg':current_latlon_deg[0],
             'lon_deg':current_latlon_deg[1],
             'alt_km':current_altitude_km,
         }
 
-    def get_current_orientation(self, elapsed_time_sec: float) -> Dict:
+    def get_current_orientation(
+        self,
+        elapsed_time_sec: float,
+        horizontal_velocity_km_sec: float,
+    ) -> Dict:
         """Compute the heading, tilt, and roll (degrees) for current position
         based on elapsed time since launch (seconds).
+        Note: For version 0.1.0, COLLADA missile representations are
+        assumed to be symmetrical, and roll is always set to 0 degrees.
 
         Arguments
             elapsed_time_sec: elapsed time since launch (seconds)
+            horizontal_velocity_km_sec: horizontal velocity (km/s)
 
         Returns
             dict containing bearing_deg, tilt_deg, and roll_deg
         """
-        current_position_dict = self.compute_current_position(elapsed_time_sec)
-        current_bearing_deg = geo.calculate_initial_bearing(
-            current_position_dict['lat_deg'], current_position_dict['lon_deg'],
-            self.AP_latlon_deg[0], self.AP_latlon_deg[1],
-        )
-        
-        
-        
-        self.compute_current_bearing(
-            
-        )
+        position_dict = self.compute_current_position(elapsed_time_sec)
+        position_latlon_deg = (position_dict['lat_deg'], position_dict['lon_deg'])
+        current_bearing_deg = self.compute_bearing(position_latlon_deg)
         current_tilt_deg = geo.rad_to_deg(
             geo.convert_trig_to_compass_angle(
                 np.arctan2(
                     self.compute_current_vertical_velocity(elapsed_time_sec),
-                    self.static_data['horizontal_velocity_km_sec'],
+                    horizontal_velocity_km_sec,
                 )
             )
         )
@@ -282,24 +270,39 @@ class BallisticMissile(Missile):
             'roll_deg':0,
         }
 
+    def compute_initial_vertical_velocity(self, time_to_target_sec: float) -> float:
+        """Compute initial vertical velocity (km/s) at time of launch as 
+        time-to-apogee (seconds) multiplied by gravitational acceleration (km/s^2).
 
-    def compute_current_vertical_velocity(self, elapsed_time_sec: float) -> float:
+        Arguments:
+            time_to_target_sec: missile time-to-target (seconds)
+
+        Returns:
+            initial vertical velocity (km/s)
+        """
+        time_to_apogee_sec = time_to_target_sec * 0.5
+        initial_vertical_velocity_km_sec = (
+            time_to_apogee_sec * abs(constants['GRAVITY_ACCEL_KM_PER_S2'])
+        )
+        return initial_vertical_velocity_km_sec
+
+    def compute_current_vertical_velocity(
+        self,
+        elapsed_time_sec: float,
+        initial_vertical_velocity_km_sec: float,
+    ) -> float:
         """Compute vertical velocity (km/s) given time since launch (seconds).
         
-        Arguments
+        Arguments:
             elapsed_time_sec: Elapsed time since launch (in seconds)
+            initial_vertical_velocity_km_sec: vertical velocity at time of launch (km/s)
+
+        Returns:
+            current vertical velocity (km/s)
         """
-        if elapsed_time_sec > self.time_to_target_sec:
-            print(f'Elapsed time of {elapsed_time_sec} seconds exceeds total '+
-                  'time to target. Vertical velocity not calculated.')
-        else:
-            if self.initial_vert_vel_km_per_sec is None:
-                self.set_initial_vertical_velocity()
-            current_vert_vel_km_per_sec = (
-                self.initial_vert_vel_km_per_sec 
-                + GRAVITY_ACCEL_KM_PER_S2 * elapsed_time_sec
-            )
-            return current_vert_vel_km_per_sec
+        change_in_velocity = constants['GRAVITY_ACCEL_KM_PER_S2'] * elapsed_time_sec
+        return (initial_vertical_velocity_km_sec + change_in_velocity)
+
 
 
 
