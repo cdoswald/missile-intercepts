@@ -166,5 +166,3 @@ class Missile(ABC):
         return geo.rad_to_deg(np.arctan(
             vertical_velocity_km_sec / horizontal_velocity_km_sec
         ))
-
-        return current_bearing_deg
