@@ -5,7 +5,7 @@ Contents:
     Public classes:
         BallisticMissile
 """
-#TODO: verify initial launch velocity less than Earth escape velocity
+#TODO: check initial launch velocity less than Earth escape velocity
 
 # Import packages
 from collections import OrderedDict
@@ -13,13 +13,17 @@ from typing import Dict, Optional
 
 import numpy as np
 
+from kml_converters import KMLTrajectoryConverter
 from missiles_abstract import Missile
-# from kml_classes import KMLTrajectorySim
-import geo_utils as geo
-import utils as utl
+from utils import get_constants
+from utils_geo import (
+    rad_to_deg,
+    determine_destination_coords,
+    convert_trig_to_compass_angle,
+)
 
 # Get constants
-constants = utl.get_constants()
+constants = get_constants()
 
 # Define classes
 class BallisticMissile(Missile):
@@ -31,7 +35,7 @@ class BallisticMissile(Missile):
         AP_latlon_deg: tuple of aimpoint (latitutde, longitude) in degrees
         build_data: dict of static characteristics of ballistic missile
         trajectory_data: dict of missile position/orientation for each timestep
-        kml_trajectory:
+        kml_trajectory: simplekml document of KML trajectory data
 
     Methods:
         build
@@ -40,10 +44,15 @@ class BallisticMissile(Missile):
         get_current_orientation
         compute_initial_vertical_velocity
         compute_current_vertical_velocity
+        convert_trajectory_to_kml
     """
 
     def __init__(self, params: Dict) -> None:
-        """Instantiate BallisticMissile."""
+        """Instantiate BallisticMissile.
+
+        Arguments
+            params: dict of user-defined parameter values
+        """
         super(BallisticMissile, self).__init__(params)
         self.build_data = None
         self.trajectory_data = None
@@ -84,23 +93,23 @@ class BallisticMissile(Missile):
             'initial_launch_angle_deg':initial_launch_angle_deg,
         }
 
-    def launch(
-        self,
-        stoptime_sec: Optional[float] = None,
-        timestep_sec: float = 1,
-    ) -> None:
+    def launch(self, stoptime_sec: Optional[float] = None) -> None:
         """Record missile position (latitude, longitude, altitude) and orientation
         (heading, tilt, and roll) for each timestep from launch until impact.
         
         Arguments
             stoptime_sec: maximum time (seconds) for which to calculate missile
-                position and orientation
-            timestep_sec: timestep interval (seconds)
+                position and orientation; if None (default), use total time to 
+                target
         """
         traj_dict = OrderedDict()
         if stoptime_sec is None:
             stoptime_sec = self.build_data['total_time_to_target_sec']
-        for elapsed_time_sec in np.arange(0, stoptime_sec + timestep_sec, timestep_sec):
+        for elapsed_time_sec in np.arange(
+            start=0,
+            stop=(stoptime_sec + self.params['timestep_sec']),
+            step=self.params['timestep_sec'],
+        ):
             position_dict = self.get_current_position(elapsed_time_sec)
             orientation_dict = self.get_current_orientation(elapsed_time_sec)
             traj_dict[elapsed_time_sec] = {**position_dict, **orientation_dict}
@@ -117,7 +126,7 @@ class BallisticMissile(Missile):
             dict containing lat_deg, lon_deg, and alt_km
         """
         dist_km = self.build_data['horizontal_velocity_km_sec'] * elapsed_time_sec
-        current_latlon_deg = geo.determine_destination_coords(
+        current_latlon_deg = determine_destination_coords(
             origin_lat_deg=self.LP_latlon_deg[0],
             origin_lon_deg=self.LP_latlon_deg[1],
             distance_km=dist_km,
@@ -131,7 +140,7 @@ class BallisticMissile(Missile):
         return {
             'lat_deg':current_latlon_deg[0],
             'lon_deg':current_latlon_deg[1],
-            'alt_km':current_altitude_km,
+            'alt_km':max(current_altitude_km, 0),
         }
 
     def get_current_orientation(self, elapsed_time_sec: float) -> Dict:
@@ -149,8 +158,8 @@ class BallisticMissile(Missile):
         position_dict = self.get_current_position(elapsed_time_sec)
         position_latlon_deg = (position_dict['lat_deg'], position_dict['lon_deg'])
         current_bearing_deg = self.compute_bearing(position_latlon_deg)
-        current_tilt_deg = geo.rad_to_deg(
-            geo.convert_trig_to_compass_angle(
+        current_tilt_deg = rad_to_deg(
+            convert_trig_to_compass_angle(
                 np.arctan2(
                     self.compute_current_vertical_velocity(elapsed_time_sec),
                     self.build_data['horizontal_velocity_km_sec'],
@@ -194,19 +203,17 @@ class BallisticMissile(Missile):
             + change_in_velocity
         )
 
-    # def create_kml_trajectory(self) -> None:
-    #     """Convert missile trajectory to KML."""
-    #     kml_trajectory_sim = KMLTrajectorySim(
-    #         data=self.trajectory_data,
-    #         collada_model_link=self.collada_model_link,
-    #         collada_model_scale=self.collada_model_scale,
-    #     )
-    #     kml_trajectory_sim.create_trajectory()
-    #     self.kml_trajectory = kml_trajectory_sim.kml
+    def convert_trajectory_to_kml(self) -> None:
+        """Convert missile trajectory data to KML."""
+        kml_converter = KMLTrajectoryConverter(
+            self.params,
+            self.trajectory_data,
+        )
+        self.kml_trajectory = kml_converter.create_kml_trajectory()
+        
+
 
     #     self.intercept_ground_dist_from_TMAP_km = intercept_ground_dist_from_TMAP_km
-    #     self.collada_model_link = collada_model_link
-    #     self.collada_model_scale = collada_model_scale
     #     self.intercept_seconds_after_launch = None
     #     self.set_intercept_time()
 

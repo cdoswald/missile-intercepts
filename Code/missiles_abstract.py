@@ -11,7 +11,11 @@ from typing import Dict, Optional, Tuple
 
 import numpy as np
 
-import geo_utils as geo
+from utils_geo import (
+    calculate_great_circle_distance,
+    calculate_initial_bearing,
+    rad_to_deg,
+)
 
 # Define classes
 class Missile(ABC):
@@ -20,7 +24,7 @@ class Missile(ABC):
     Attributes:
         params: dict of user-defined parameter values
         LP_latlon_deg: tuple of launchpoint (latitude, longitude) in degrees
-        AP_latlon_deg: tuple of aimpoint (latitutde, longitude) in degrees
+        AP_latlon_deg: tuple of aimpoint (latitude, longitude) in degrees
 
     Methods:
         build (abstract)
@@ -36,7 +40,11 @@ class Missile(ABC):
     """
 
     def __init__(self, params: Optional[Dict] = None) -> None:
-        """Instantiate Missile class."""
+        """Instantiate Missile class.
+
+        Arguments
+            params: dict of user-defined parameter values
+        """
         self.params = params
         self.LP_latlon_deg = params.get('LP_latlon_deg', None)
         self.AP_latlon_deg = params.get('AP_latlon_deg', None)
@@ -46,13 +54,10 @@ class Missile(ABC):
         """Set all initial launch parameters for missile."""
 
     @abstractmethod
-    def launch(self, timestep_sec: float = 1) -> None:
+    def launch(self) -> None:
         """Record missile position (latitude, longitude, and altitude) and
         orientation (heading, tilt, and roll) for each timestep from launch
         until impact.
-
-        Arguments:
-            timestep_sec: length of time step in seconds
         """
 
     @abstractmethod
@@ -101,7 +106,7 @@ class Missile(ABC):
         Returns:
             distance to target (km)
         """
-        return geo.calculate_great_circle_distance(
+        return calculate_great_circle_distance(
             position_latlon_deg[0], position_latlon_deg[1],
             self.AP_latlon_deg[0], self.AP_latlon_deg[1],
         )
@@ -119,7 +124,7 @@ class Missile(ABC):
         Returns
             bearing from position to aimpoint (degrees, clockwise from North)
         """
-        return geo.calculate_initial_bearing(
+        return calculate_initial_bearing(
             position_latlon_deg[0], position_latlon_deg[1],
             self.AP_latlon_deg[0], self.AP_latlon_deg[1],
         )
@@ -158,6 +163,6 @@ class Missile(ABC):
         Returns:
             altitude angle (degrees)
         """
-        return geo.rad_to_deg(np.arctan(
+        return rad_to_deg(np.arctan(
             vertical_velocity_km_sec / horizontal_velocity_km_sec
         ))

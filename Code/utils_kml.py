@@ -10,9 +10,7 @@ import numpy as np
 import simplekml
 
 # Import local modules
-#script_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-#sys.path.insert(0, script_dir)
-import geo_utils as geo
+from utils_geo import determine_destination_coords
 
 # Define functions
 def save_kmz(
@@ -174,7 +172,7 @@ def add_kml_circle_linestring(
     linestring = kml_folder.newlinestring(name=linestring_label)
     coords_list = []
     for angle_deg in np.arange(361):
-        latlon_deg = geo.determine_destination_coords(
+        latlon_deg = determine_destination_coords(
             origin_lat_deg=origin_lat_deg,
             origin_lon_deg=origin_lon_deg,
             distance_km=radius_km,
