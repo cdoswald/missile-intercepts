@@ -13,6 +13,8 @@ from typing import Dict, Optional
 
 import numpy as np
 
+import simplekml
+
 from kml_converters import KMLTrajectoryConverter
 from missiles_abstract import Missile
 from utils import get_constants
@@ -35,7 +37,6 @@ class BallisticMissile(Missile):
         AP_latlon_deg: tuple of aimpoint (latitutde, longitude) in degrees
         build_data: dict of static characteristics of ballistic missile
         trajectory_data: dict of missile position/orientation for each timestep
-        kml_trajectory: simplekml document of KML trajectory data
 
     Methods:
         build
@@ -44,7 +45,7 @@ class BallisticMissile(Missile):
         get_current_orientation
         compute_initial_vertical_velocity
         compute_current_vertical_velocity
-        convert_trajectory_to_kml
+        create_kml_trajectory
     """
 
     def __init__(self, params: Dict) -> None:
@@ -56,7 +57,6 @@ class BallisticMissile(Missile):
         super(BallisticMissile, self).__init__(params)
         self.build_data = None
         self.trajectory_data = None
-        self.kml_trajectory = None
 
     def build(self) -> None:
         """Compute static characteristics of ballistic missile:
@@ -203,13 +203,24 @@ class BallisticMissile(Missile):
             + change_in_velocity
         )
 
-    def convert_trajectory_to_kml(self) -> None:
-        """Convert missile trajectory data to KML."""
+    def create_kml_trajectory(
+        self,
+        kml_document: simplekml.Document,
+    ) -> simplekml.Document:
+        """Convert missile trajectory data to KML.
+
+        Arguments:
+            kml_document: simplekml document in which to add KML trajectory data
+
+        Returns:
+            simplekml document > missile folder > timestep folders > 
+            COLLADA model and linestring elements
+        """
         kml_converter = KMLTrajectoryConverter(
             self.params,
             self.trajectory_data,
         )
-        self.kml_trajectory = kml_converter.create_kml_trajectory()
+        return kml_converter.create_kml_trajectory(kml_document)
         
 
 

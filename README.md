@@ -1,6 +1,11 @@
 # Ballistic Missile Intercept Model
 
-The goal of this project is to simulate a hit-to-kill ballistic missile intercept in Google Earth.
+The goals of this project are to:
+
+1) Develop a simplified model to simulate a ballistic missile intercept in Google Earth
+
+2) Explore probabilistic methods for predicting the trajectory of a ballistic missile 
+under various degrees of uncertainty about the missile's launch site, velocity, mass, and intended target.
 
 ### Methodology
 

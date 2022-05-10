@@ -1,21 +1,20 @@
-"""Unit tests for geo_utils.py."""
-
+"""
+Unit tests for utils_geo.py.
+"""
 # Import packages
-import inspect
-import os
-import sys
-
 import numpy as np
 
-# Import local modules
-script_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-parent_dir = os.path.dirname(script_dir)
-utils_dir = os.path.join(parent_dir, 'Utils')
-sys.path.insert(0, utils_dir)
-import geo_utils as geo
+from ..utils import get_constants
+from ..utils_geo import (
+    convert_trig_to_compass_angle,
+    convert_lat_lon_alt_to_nvector,
+    calculate_magnitude_dist_bt_vectors,
+    calculate_great_circle_distance,
+    calculate_great_circle_distance_vec
+)
 
-# Define constants
-EARTH_RADIUS_KM = 6378
+# Get constants
+constants = get_constants()
 
 # Define tests
 def test_convert_trig_to_compass_angle():
@@ -43,7 +42,7 @@ def test_convert_trig_to_compass_angle():
     for unit, conversions_list in test_cases.items():
         radians_bool = (unit == 'radians')
         for conversion_dict in conversions_list:
-            converted_val = geo.convert_trig_to_compass_angle(
+            converted_val = convert_trig_to_compass_angle(
                 trig_angle=conversion_dict['trig_angle'],
                 radians=radians_bool
             )
@@ -70,7 +69,7 @@ def test_convert_lat_lon_alt_to_nvector():
     errors_list = []
     for direction, conversions_dict in test_cases.items():
         latlon_deg = conversions_dict['latlon_deg']
-        n_vector = geo.convert_lat_lon_alt_to_nvector(
+        n_vector = convert_lat_lon_alt_to_nvector(
             lat_deg=latlon_deg[0], lon_deg=latlon_deg[1]
         )
         if len(n_vector) != 3:
@@ -78,7 +77,7 @@ def test_convert_lat_lon_alt_to_nvector():
                 f'contains {len(n_vector)} coordinates.')
         if (
             tuple([round(x, 10) for x in n_vector]) !=
-            tuple([EARTH_RADIUS_KM * x for x in conversions_dict['nvector']])
+            tuple([constants['EARTH_RADIUS_KM'] * x for x in conversions_dict['nvector']])
         ):
             errors_list.append(f'Incorrect conversion for test case "{direction}".')
     assert not errors_list, 'Errors occurred: \n{}'.format('\n'.join(errors_list))
@@ -98,7 +97,7 @@ def test_calculate_magnitude_dist_bt_vectors():
     }
     errors_list = []
     for test_num, vectors_dict in test_cases.items():
-        calculated_dist = geo.calculate_magnitude_dist_bt_vectors(
+        calculated_dist = calculate_magnitude_dist_bt_vectors(
             vectors_dict['vec1'], vectors_dict['vec2'],
         )
         if calculated_dist != vectors_dict['magnitude_dist']:
@@ -136,7 +135,7 @@ def test_calculate_great_circle_distance():
             if origin_city == dest_city:
                 continue
             else:
-                calculated_dist_km = geo.calculate_great_circle_distance(
+                calculated_dist_km = calculate_great_circle_distance(
                     origin_lat_deg=origin_latlon_deg[0],
                     origin_lon_deg=origin_latlon_deg[1],
                     dest_lat_deg=dest_latlon_deg[0],
@@ -185,7 +184,7 @@ def test_calculate_great_circle_distance_vec():
             if origin_city == dest_city:
                 continue
             else:
-                calculated_dist_km = geo.calculate_great_circle_distance_vec(
+                calculated_dist_km = calculate_great_circle_distance_vec(
                     origin_lat_deg=origin_latlon_deg[0],
                     origin_lon_deg=origin_latlon_deg[1],
                     dest_lat_deg=dest_latlon_deg[0],

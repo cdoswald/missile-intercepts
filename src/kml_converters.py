@@ -53,29 +53,38 @@ class KMLTrajectoryConverter():
         self.params = params
         self.trajectory_data = trajectory_data
 
-    def create_kml_trajectory(self) -> simplekml.Kml:
+    def create_kml_trajectory(
+        self,
+        kml_document: simplekml.Document,
+    ) -> simplekml.Document:
         """Create KML model and linestring objects for missile trajectory.
+        
+        Arguments:
+            kml: simplekml document in which to add KML trajectory data
 
         Returns:
-            simplekml document of KML trajectory data
+            simplekml document > missile folder > timestep folders > 
+            COLLADA model and linestring elements
         """
         linestring_style = create_kml_linestring_style(
             color=simplekml.Color.blanchedalmond,
             width=2,
         )
-        kml = simplekml.Kml()
+        kml_missile_folder = kml_document.newfolder(name=self.params['missile_name'])
         for time_idx, position_dict in self.trajectory_data.items():
-            kml_folder = kml.newfolder(name=f'Position at t={time_idx}')
+            kml_timestep_folder = kml_missile_folder.newfolder(
+                name=f'position at t={time_idx}'
+            )
             timespan_begin, timespan_end = self.compute_timespan_start_end_times(
                 time_idx
             )
             # Add 3D model
             add_kml_model(
-                kml_folder=kml_folder,
+                kml_folder=kml_timestep_folder,
                 lat_deg=position_dict['lat_deg'],
                 lon_deg=position_dict['lon_deg'],
                 alt_meters=km_to_meters(position_dict['alt_km']),
-                collada_model_link=self.params['collada_model_link'],
+                collada_model_link=self.params['collada_model_path'],
                 heading_deg=position_dict['bearing_deg'],
                 tilt_deg=position_dict['tilt_deg'],
                 roll_deg=position_dict['roll_deg'],
@@ -88,26 +97,27 @@ class KMLTrajectoryConverter():
             # Add linestring indicating trajectory over previous timestep
             if time_idx != min(self.trajectory_data.keys()):
                 prev_time_idx = time_idx - self.params['timestep_sec']
-                prev_position_dict = self.trajectory_data[prev_time_idx]    
+                prev_position_dict = self.trajectory_data[prev_time_idx]  
+                lon_lat_alt_list = [
+                    (
+                        prev_position_dict['lon_deg'],
+                        prev_position_dict['lat_deg'],
+                        km_to_meters(prev_position_dict['alt_km'])
+                     ),
+                    (  
+                        position_dict['lon_deg'],
+                        position_dict['lat_deg'],
+                        km_to_meters(position_dict['alt_km'])
+                    ),
+                ]
                 add_kml_linestring(
-                    kml_folder=kml_folder,
-                    lon_lat_alt_list=[
-                        (
-                            prev_position_dict['lon_deg'],
-                            prev_position_dict['lat_deg'],
-                            km_to_meters(prev_position_dict['alt_km'])
-                         ),
-                        (  
-                            position_dict['lon_deg'],
-                            position_dict['lat_deg'],
-                            km_to_meters(position_dict['alt_km'])
-                        ),
-                    ],
+                    kml_folder=kml_timestep_folder,
+                    lon_lat_alt_list=lon_lat_alt_list,
                     style=linestring_style,
                     timespan_begin=timespan_begin.strftime(constants['KML_TIME_FORMAT']),
                     timespan_end='',
                 )
-        return kml
+        return kml_document
 
     def compute_timespan_start_end_times(
         self,
