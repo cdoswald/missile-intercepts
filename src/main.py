@@ -12,9 +12,6 @@ import simplekml
 from missiles_ballistic import BallisticMissile
 from utils_kml import save_kmz
 
-# TODO: investigate why collada model flips around at max timestep
-# TODO: reduce number of args to save_kmz func
-
 # Define functions
 def main() -> None:
     """Main execution for missile intercept model."""
@@ -26,12 +23,11 @@ def main() -> None:
             missile.build()
             missile.launch()
             kml = missile.create_kml_trajectory(kml)
-        # Create separate KMZ file for each group
         save_kmz(
             kml=kml,
-            output_dir='../KML',
+            output_dir='../kml',
             output_file_name=group,
-            attachment_dir='../Blender',
+            attachment_dir='../blender',
             attachment_files_list=['test_missile.dae'],
         )
 

@@ -6,7 +6,7 @@ Contents:
         Missile (abstract)
 """
 # Import packages
-from collections.abc import ABC, abstractmethod
+from abc import ABC, abstractmethod
 from typing import Dict, Optional, Tuple
 
 import numpy as np
