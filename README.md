@@ -1,34 +1,33 @@
-# Missile Intercept Model
+# Probabilistic Missile Intercept Model
 
-Project goals:
+The goals of this project are to:
 
 1) Develop a simplified missile intercept model and simulate the model in Google Earth
 
-2) Investigate methods for predicting the trajectory of a missile under various levels of 
+2) Investigate methods for predicting a missile's trajectory under various levels of 
 uncertainty about the missile's launchpoint, intended target, and velocity
 
-Example 1:
+<br>
 
 <p>
   <a href="docs/images/KML_ex1.PNG">
-  <img src="docs/images/KML_ex1.PNG" alt="Example 1" width="800"/>
+  <img src="docs/images/KML_ex1.PNG" alt="KML Example 1" width="600"/>
   </a>
 </p>
 
-Example 2:
+<br>
+
 <p>
   <a href="docs/images/KML_ex2.PNG">
-  <img src="docs/images/KML_ex2.PNG" alt="Example 2" width="800"/>
+  <img src="docs/images/KML_ex2.PNG" alt="KML Example 2" width="600"/>
   </a>
 </p>
 
-# Getting Started
+## Getting Started
 
-## Setting Up a Conda Virtual Environment
+### Setting Up a Conda Virtual Environment
 
-The [environment.yml](docs/env/environment.yml) file contains all of the packages needed to run the code in this repository.
-
-To create a new Conda virtual environment with the required packages:
+The [environment.yml](docs/env/environment.yml) file contains all of the packages needed to run the code in this repository:
 
 1. Open an Anaconda Prompt
 
@@ -36,7 +35,17 @@ To create a new Conda virtual environment with the required packages:
 
 3. Activate the virtual environment: `conda activate missile_env`
 
-### Methodology
+### Setting Model Parameters
+
+All configuration parameters are set via the [Config](config/config.xlsx) file (a description, format, and datatype of each parameter are available in that file).
+
+<p>
+  <a href="docs/images/config_ex1.PNG">
+  <img src="docs/images/config_ex1.PNG" alt="Config Example 1" width="600"/>
+  </a>
+</p>
+
+## Methodology
 
 The plan is to start by developing a simplified model and then to build on that model over time. The first model iteration
 does not take into account any of the following (for either the ballistic or interceptor missiles):
@@ -47,7 +56,7 @@ does not take into account any of the following (for either the ballistic or int
 - Rotation of the Earth
 - Uncertainty in ballistic missile trajectory
 
-### Sources
+## Sources
 
 - Trajectory Equations
   - [University of Florida Department of Mechanical & Aerospace Engineering](https://mae.ufl.edu/~uhk/ICBM.pdf)
