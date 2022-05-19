@@ -11,7 +11,7 @@ uncertainty about the missile's launchpoint, intended target, and velocity
 
 <p>
   <a href="docs/images/KML_ex1.PNG">
-  <img src="docs/images/KML_ex1.PNG" alt="KML Example 1" width="600"/>
+  <img src="docs/images/KML_ex1.PNG" alt="KML Example 1" width="800"/>
   </a>
 </p>
 
@@ -19,7 +19,7 @@ uncertainty about the missile's launchpoint, intended target, and velocity
 
 <p>
   <a href="docs/images/KML_ex2.PNG">
-  <img src="docs/images/KML_ex2.PNG" alt="KML Example 2" width="600"/>
+  <img src="docs/images/KML_ex2.PNG" alt="KML Example 2" width="800"/>
   </a>
 </p>
 
@@ -41,7 +41,7 @@ All configuration parameters are set via the [Config](config/config.xlsx) file (
 
 <p>
   <a href="docs/images/config_ex1.PNG">
-  <img src="docs/images/config_ex1.PNG" alt="Config Example 1" width="600"/>
+  <img src="docs/images/config_ex1.PNG" alt="Config Example 1" width="800"/>
   </a>
 </p>
 
