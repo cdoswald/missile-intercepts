@@ -1,6 +1,6 @@
-# Probabilistic Missile Intercept Model
+# A Probabilistic Missile Intercept Model
 
-The goals of this project are to:
+**Project Goals:**
 
 1) Develop a simplified missile intercept model and simulate the model in Google Earth
 
@@ -14,8 +14,6 @@ uncertainty about the missile's launchpoint, intended target, and velocity
   <img src="docs/images/KML_ex1.PNG" alt="KML Example 1" width="800"/>
   </a>
 </p>
-
-<br>
 
 <p>
   <a href="docs/images/KML_ex2.PNG">
@@ -40,7 +38,7 @@ The [environment.yml](docs/env/environment.yml) file contains all of the package
 All configuration parameters are set via the [Config](config/config.xlsx) file (a description, format, and datatype of each parameter are available in that file).
 
 <p>
-  <a href="docs/images/config_ex1.PNG">
+  <a href="config/config.xlsx">
   <img src="docs/images/config_ex1.PNG" alt="Config Example 1" width="800"/>
   </a>
 </p>
