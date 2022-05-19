@@ -56,6 +56,5 @@ def parse_config(path: str) -> Dict:
         nested_config[group] = {**group_dict}
     return nested_config
 
-        
 if __name__ == '__main__':
     main()

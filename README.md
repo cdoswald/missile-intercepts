@@ -1,11 +1,40 @@
-# Ballistic Missile Intercept Model
+# Missile Intercept Model
 
-The goals of this project are to:
+Project goals:
 
-1) Develop a simplified model to simulate a ballistic missile intercept in Google Earth
+1) Develop a simplified missile intercept model and simulate the model in Google Earth
 
-2) Explore probabilistic methods for predicting the trajectory of a ballistic missile 
-under various degrees of uncertainty about the missile's launch site, velocity, mass, and intended target.
+2) Investigate methods for predicting the trajectory of a missile under various levels of 
+uncertainty about the missile's launchpoint, intended target, and velocity
+
+Example 1:
+
+<p>
+  <a href="docs/images/KML_ex1.PNG">
+  <img src="docs/images/KML_ex1.PNG" alt="Example 1" width="800"/>
+  </a>
+</p>
+
+Example 2:
+<p>
+  <a href="docs/images/KML_ex2.PNG">
+  <img src="docs/images/KML_ex2.PNG" alt="Example 2" width="800"/>
+  </a>
+</p>
+
+# Getting Started
+
+## Setting Up a Conda Virtual Environment
+
+The [environment.yml](docs/env/environment.yml) file contains all of the packages needed to run the code in this repository.
+
+To create a new Conda virtual environment with the required packages:
+
+1. Open an Anaconda Prompt
+
+2. Create a new virtual environment: `conda env create -f environment.yml`
+
+3. Activate the virtual environment: `conda activate missile_env`
 
 ### Methodology
 
