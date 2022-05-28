@@ -1,11 +1,11 @@
 # A Probabilistic Missile Intercept Model
 
-**Project Goals:**
+The primary goals for this project are to:
 
 1) Develop a simplified missile intercept model and simulate the model in Google Earth
 
 2) Investigate methods for predicting a missile's trajectory under various levels of 
-uncertainty about the missile's launchpoint, intended target, position, velocity, etc.
+uncertainty about the missile's launchpoint, intended target, current position, velocity, etc.
 
 <br>
 
@@ -17,14 +17,12 @@ uncertainty about the missile's launchpoint, intended target, position, velocity
 
 ## Getting Started
 
-### Setting Up a Conda Virtual Environment
+### Setting Up the Virtual Environment
 
 The [environment.yml](docs/env/environment.yml) file contains all of the packages needed to run the code in this repository:
 
 1. Open an Anaconda Prompt
-
 2. Create a new virtual environment: `conda env create -f environment.yml`
-
 3. Activate the virtual environment: `conda activate missile_env`
 
 ### Setting Model Parameters
@@ -41,6 +39,15 @@ Parameter descriptions, formats, and datatypes are specified in the Config file.
 
 Additional missile simulations can be created by adding new columns to the right of the existing simulations.
 
+### Running the Model
+
+To run the missile intercept model:
+
+1. Set the [Config](config/config.xlsx) file parameters
+2. Open Anaconda prompt and activate the `missile_env` virtual environment
+3. Run `python main.py`
+4. View the resulting KML files (in the `kml` folder) in [Google Earth](https://earth.google.com/web/)
+
 ## Methodology
 
 ### Ballistic Missile
@@ -50,6 +57,10 @@ Additional missile simulations can be created by adding new columns to the right
 * The time-to-apogee (sec) is multiplied by the absolute value of the gravitational acceleration (km/s^2) to determine the missile's initial vertical velocity (km/s)
 * Integrating the vertical velocity equation, the missile's altitude (km) at timestep *t* (sec) is calculated as `alt_km(t) = initial_vertical_velocity * t + 0.5 * gravitational_acceleration * t^2`
 
+### Terminal Interceptor
+
+* [IN PROGRESS]
+
 ### Limitations 
 
 The plan is to add complexity to the model over time. Currently, the model does not take into account any of the following:
@@ -58,6 +69,20 @@ The plan is to add complexity to the model over time. Currently, the model does 
 - Propulsive thrust
 - Changes in missile mass (e.g., after burning fuel)
 - Rotation of the Earth
+
+## COLLADA Models
+
+The 3D missile objects displayed in Google Earth are specified as COLLADA (.dae) files. The easiest way to create your own COLLADA file is through [Blender](https://www.blender.org/). 
+
+The missile object created in Blender should be oriented such that the nose cone is parallel to and points in the direction of the positive z-axis (in a right-handed coordinate system), with the base of the missile sitting on the plane created by the x and y-axes (in other words, the missile should appear as though it were standing upright and centered on the launch pad).
+
+Example orientation:
+
+<p>
+  <a href="docs/images/missile_orientation_blender.png">
+  <img src="docs/images/missile_orientation_blender.png" alt="Blender Missile Orientation Example" width="300"/>
+  </a>
+</p>
 
 ## Sources
 
