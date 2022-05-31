@@ -221,21 +221,3 @@ class BallisticMissile(Missile):
             self.trajectory_data,
         )
         return kml_converter.create_kml_trajectory(kml_document)
-        
-
-
-    #     self.intercept_ground_dist_from_TMAP_km = intercept_ground_dist_from_TMAP_km
-    #     self.intercept_seconds_after_launch = None
-    #     self.set_intercept_time()
-
-
-    # def set_intercept_time(self) -> None:
-    #     """Compute and set the time of intercept in seconds after launch, 
-    #     given intercept distance from targeted missile aimpoint (TMAP)."""
-    #     if self.intercept_ground_dist_from_TMAP_km is not None:
-    #         self.intercept_seconds_after_launch = (
-    #             (self.dist_to_target_km - self.intercept_ground_dist_from_TMAP_km)
-    #             / self.horiz_vel_km_per_sec
-    #         )
-    #     else:
-    #         self.intercept_seconds_after_launch = None
