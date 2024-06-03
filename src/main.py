@@ -15,7 +15,7 @@ from utils_kml import save_kmz
 # Define functions
 def main() -> None:
     """Main execution for missile intercept model."""
-    config = parse_config('../Config/config.xlsx')
+    config = parse_config('../config/config.xlsx')
     for group, sim_params_dict in config.items():
         kml = simplekml.Kml()
         for sim, params in sim_params_dict.items():
