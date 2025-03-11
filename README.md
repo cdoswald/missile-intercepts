@@ -33,6 +33,12 @@ Alternatively, you can run the code in a Docker container:
 2. Run the Docker image in interactive mode: `docker run -it missile_env`
 3. Activate the virtual environment: `conda activate missile_env`
 
+If you want to make modifications to the code that persist outside of the container:
+
+1. Use the docker-compose file to build the image: `docker-compose up --build`
+2. Run the Docker image in interactive mode: `docker-compose run --rm env`
+3. Activate the virtual environment: `conda activate missile_env`
+
 ### Setting Model Parameters
 
 All configuration parameters are set via the [Config](config/config.xlsx) file.
