@@ -22,7 +22,15 @@ uncertainty about the missile's launchpoint, intended target, current position, 
 The [environment.yml](docs/env/environment.yml) file contains all of the packages needed to run the code in this repository:
 
 1. Open an Anaconda Prompt
-2. Create a new virtual environment: `conda env create -f environment.yml`
+2. Create a new virtual environment: `conda env create -f docs/env/environment.yml`
+3. Activate the virtual environment: `conda activate missile_env`
+
+### Docker Container
+
+Alternatively, you can run the code in a Docker container:
+
+1. Build the Docker image from Dockerfile: `docker build -t missile_env .`
+2. Run the Docker image in interactive mode: `docker run -it missile_env`
 3. Activate the virtual environment: `conda activate missile_env`
 
 ### Setting Model Parameters
@@ -44,8 +52,8 @@ Additional missile simulations can be created by adding new columns to the right
 To run the missile intercept model:
 
 1. Set the [Config](config/config.xlsx) file parameters
-2. Open Anaconda prompt and activate the `missile_env` virtual environment
-3. Run `python main.py`
+2. Open Anaconda prompt OR run Docker image AND and activate the `missile_env` virtual environment (see instructions above)
+3. Run `python src/main.py`
 4. View the resulting KML files (in the `kml` folder) in [Google Earth](https://earth.google.com/web/)
 
 ## Methodology
