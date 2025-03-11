@@ -13,4 +13,3 @@ RUN conda env create -f ./docs/env/environment.yml --platform linux-64
 SHELL ["conda", "run", "-n", "missile_env", "/bin/bash", "-c"]
 
 COPY . .
-
