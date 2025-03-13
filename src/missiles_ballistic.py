@@ -15,10 +15,10 @@ import numpy as np
 
 import simplekml
 
-from kml_converters import KMLTrajectoryConverter
-from missiles_abstract import Missile
-from utils import get_constants
-from utils_geo import (
+from src.kml_converters import KMLTrajectoryConverter
+from src.missiles_abstract import Missile
+from src.utils import get_constants
+from src.utils_geo import (
     rad_to_deg,
     determine_destination_coords,
     convert_trig_to_compass_angle,
