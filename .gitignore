@@ -5,3 +5,7 @@ __pycache__/
 
 # Archived files
 _Archive/
+
+# Dashboard (in progress)
+src/app.py
+src/config.py
