@@ -1,9 +1,9 @@
 """
-Intercptor missile classes.
+Interceptor missile classes.
 
 Contents:
     Public classes:
-        TerminalInterceptor (in progress)
+        TerminalInterceptor [IN PROGRESS]
 """
 # Import packages
 from collections import OrderedDict
