@@ -56,6 +56,7 @@ class KMLTrajectoryConverter():
     def create_kml_trajectory(
         self,
         kml_document: simplekml.Document,
+        folder_name: str,
     ) -> simplekml.Document:
         """Create KML model and linestring objects for missile trajectory.
         
@@ -70,7 +71,7 @@ class KMLTrajectoryConverter():
             color=simplekml.Color.blanchedalmond,
             width=2,
         )
-        kml_missile_folder = kml_document.newfolder(name=self.params['missile_name'])
+        kml_missile_folder = kml_document.newfolder(name=folder_name)
         for time_idx, position_dict in self.trajectory_data.items():
             kml_timestep_folder = kml_missile_folder.newfolder(
                 name=f'position at t={time_idx}'
