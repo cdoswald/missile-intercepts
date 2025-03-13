@@ -210,8 +210,8 @@ class TerminalInterceptor(Missile):
         Returns:
             initial vertical velocity (km/s)
         """
-        a = (0.5 * constants['GRAVITY_ACCEL_KM_PER_S2'] * time_to_intercept_sec**2)
-        return (self.intercept_position["alt_km"] - a) / time_to_intercept_sec
+        gravity_drop = (0.5 * constants['GRAVITY_ACCEL_KM_PER_S2'] * time_to_intercept_sec**2)
+        return (self.intercept_position["alt_km"] - gravity_drop) / time_to_intercept_sec
 
     def compute_current_vertical_velocity(self, elapsed_time_sec: float) -> float:
         """Compute vertical velocity (km/s) given time since launch (seconds).
