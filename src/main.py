@@ -24,11 +24,9 @@ def main(config_path: str) -> None:
         sim_params_dict_ballistic = config_ballistic[group_name]
         sim_params_dict_interceptor = config_interceptor[group_name]
         for sim, params in sim_params_dict_ballistic.items():
-            # Create trajectory for ballistic missile
+            missile_intercept_time = None
             missile = BallisticMissile(params)
             missile.build()
-            missile.launch()
-            kml = missile.create_kml_trajectory(kml, params["missile_name"])
             # Create trajectory for interceptor(s)
             for interceptor_sim, interceptor_params in sim_params_dict_interceptor.items():
                 if params["missile_name"] in interceptor_params["intercept_missile_name"]:
@@ -40,6 +38,20 @@ def main(config_path: str) -> None:
                         kml,
                         interceptor_params["interceptor_name"]
                     )
+                    # Update missile intercept time with earliest time
+                    if missile_intercept_time is None:
+                        missile_intercept_time = interceptor.intercept_time_sec
+                    else:
+                        missile_intercept_time = min(
+                            missile_intercept_time, interceptor.intercept_time_sec
+                        )
+            # Create trajectory for ballistic missile
+            if missile_intercept_time is not None:
+                missile.launch(stoptime_sec=missile_intercept_time)
+            else:
+                missile.launch()
+            kml = missile.create_kml_trajectory(kml, params["missile_name"])
+
         # Save group KML file
         save_kmz(
             kml=kml,
