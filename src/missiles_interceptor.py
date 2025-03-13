@@ -18,6 +18,9 @@ from src.missiles_abstract import Missile
 from src.missiles_ballistic import BallisticMissile
 from src.utils import get_constants
 from src.utils_geo import (
+    rad_to_deg,
+    determine_destination_coords,
+    convert_trig_to_compass_angle,
     calculate_cross_track_distance,
 )
 
@@ -43,8 +46,6 @@ class TerminalInterceptor(Missile):
         super().__init__(params)
         self.targeted_missile = None
         self.intercept_position = None
-        self.build_data = None
-        self.trajectory_data = None
 
     def set_intercept_target(self, targeted_missile: BallisticMissile) -> None:
         """Identify missile to intercept."""
@@ -85,28 +86,51 @@ class TerminalInterceptor(Missile):
         dist_to_intercept_km = (
             (ground_dist_to_intercept_km**2 + self.intercept_position["alt_km"]**2) ** (1/2)
         )
-        
+        time_to_intercept_sec = (
+            ground_dist_to_intercept_km / self.params["horizontal_velocity_km_sec"]
+        )
+        initial_vertical_velocity_km_sec = (
+            time_to_intercept_sec * abs(constants['GRAVITY_ACCEL_KM_PER_S2'])
+        )
+        initial_launch_velocity_km_sec = self.compute_velocity(
+            self.params['horizontal_velocity_km_sec'],
+            initial_vertical_velocity_km_sec,
+        )
+        initial_launch_angle_deg = self.compute_altitude_angle(
+            self.params['horizontal_velocity_km_sec'],
+            initial_vertical_velocity_km_sec,
+        )
         self.build_data = {
             'launchpoint_ground_dist_to_intercept_km':ground_dist_to_intercept_km,
             'launchpoint_dist_to_intercept_km':dist_to_intercept_km,
             'launchpoint_bearing_deg':self.compute_bearing(self.LP_latlon_deg),
-            'total_time_to_intercept_sec':None,
+            'total_time_to_intercept_sec':time_to_intercept_sec,
             'horizontal_velocity_km_sec':self.params['horizontal_velocity_km_sec'],
-            'initial_vertical_velocity_km_sec':None,
-            'initial_launch_velocity_km_sec':None,
-            'initial_launch_angle_deg':None,
+            'initial_vertical_velocity_km_sec':initial_vertical_velocity_km_sec,
+            'initial_launch_velocity_km_sec':initial_launch_velocity_km_sec,
+            'initial_launch_angle_deg':initial_launch_angle_deg,
         }
 
     def launch(self, stoptime_sec: Optional[float] = None) -> None:
-        """Record missile position (latitude, longitude, altitude) and orientation
+        """Record interceptor position (latitude, longitude, altitude) and orientation
         (heading, tilt, and roll) for each timestep from launch until impact.
         
         Arguments
             stoptime_sec: maximum time (seconds) for which to calculate missile
-                position and orientation; if None (default), use total time to 
-                target
+                position and orientation; if None (default), use total time to intercept
         """
-        pass
+        traj_dict = OrderedDict()
+        if stoptime_sec is None:
+            stoptime_sec = self.build_data['total_time_to_intercept_sec']
+        for elapsed_time_sec in np.arange(
+            start=0,
+            stop=(stoptime_sec + self.params['timestep_sec']),
+            step=self.params['timestep_sec'],
+        ):
+            position_dict = self.get_current_position(elapsed_time_sec)
+            orientation_dict = self.get_current_orientation(elapsed_time_sec)
+            traj_dict[elapsed_time_sec] = {**position_dict, **orientation_dict}
+        self.trajectory_data = traj_dict
 
     def get_current_position(self, elapsed_time_sec: float) -> Dict:
         """Compute the current latitude/longitude (degrees) and altitude (km)
@@ -118,7 +142,23 @@ class TerminalInterceptor(Missile):
         Returns
             dict containing lat_deg, lon_deg, and alt_km
         """
-        pass
+        dist_km = self.build_data['horizontal_velocity_km_sec'] * elapsed_time_sec
+        current_latlon_deg = determine_destination_coords(
+            origin_lat_deg=self.LP_latlon_deg[0],
+            origin_lon_deg=self.LP_latlon_deg[1],
+            distance_km=dist_km,
+            initial_bearing_deg=self.build_data['launchpoint_bearing_deg'],
+        )
+        # Integrate vertical velocity formula
+        current_altitude_km = ( 
+            self.build_data['initial_vertical_velocity_km_sec'] * elapsed_time_sec
+            + (0.5 * constants['GRAVITY_ACCEL_KM_PER_S2'] * elapsed_time_sec**2)
+        )
+        return {
+            'lat_deg':current_latlon_deg[0],
+            'lon_deg':current_latlon_deg[1],
+            'alt_km':max(current_altitude_km, 0),
+        }
 
     def get_current_orientation(self, elapsed_time_sec: float) -> Dict:
         """Compute the heading, tilt, and roll (degrees) for current position
@@ -132,23 +172,30 @@ class TerminalInterceptor(Missile):
         Returns
             dict containing bearing_deg, tilt_deg, and roll_deg
         """
-        pass
+        position_dict = self.get_current_position(elapsed_time_sec)
+        position_latlon_deg = (position_dict['lat_deg'], position_dict['lon_deg'])
+        current_bearing_deg = self.compute_bearing(position_latlon_deg)
+        current_tilt_deg = rad_to_deg(convert_trig_to_compass_angle(np.arctan2(
+            self.compute_current_vertical_velocity(elapsed_time_sec),
+            self.build_data['horizontal_velocity_km_sec'],
+        )))
+        return {
+            'bearing_deg':current_bearing_deg,
+            'tilt_deg':current_tilt_deg,
+            'roll_deg':0,
+        }
 
-    # def set_intercept_surface_to_air_distance(self) -> None:
-    #     """Compute and set the straight-line distance between interceptor launch
-    #     point and intercept location."""
-    #     interceptor_LP_vector = geo.convert_lat_lon_alt_to_nvector(
-    #         lat_deg=self.LP_latlon_deg[0],
-    #         lon_deg=self.LP_latlon_deg[1],
-    #     )
-    #     intercept_position_vector = geo.convert_lat_lon_alt_to_nvector(
-    #         lat_deg=self.intercept_position_dict['lat_deg'],
-    #         lon_deg=self.intercept_position_dict['lon_deg'],
-    #         alt_km=self.intercept_position_dict['alt_km'],
-    #     )
-    #     self.intercept_surface_to_air_dist_km = geo.calculate_magnitude_dist_bt_vectors(
-    #         interceptor_LP_vector, intercept_position_vector,
-    #     )
+    def compute_current_vertical_velocity(self, elapsed_time_sec: float) -> float:
+        """Compute vertical velocity (km/s) given time since launch (seconds).
+        
+        Arguments:
+            elapsed_time_sec: Elapsed time since launch (in seconds)
+
+        Returns:
+            current vertical velocity (km/s)
+        """
+        change_in_velocity = constants['GRAVITY_ACCEL_KM_PER_S2'] * elapsed_time_sec
+        return (self.build_data['initial_vertical_velocity_km_sec'] + change_in_velocity)
 
     def missile_in_interceptor_ground_range(self) -> bool:
         """If max range set, determine if targeted missile trajectory 

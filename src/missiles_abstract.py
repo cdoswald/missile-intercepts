@@ -11,6 +11,9 @@ from typing import Dict, Optional, Tuple
 
 import numpy as np
 
+import simplekml
+
+from src.kml_converters import KMLTrajectoryConverter
 from src.utils_geo import (
     calculate_great_circle_distance,
     calculate_initial_bearing,
@@ -48,6 +51,8 @@ class Missile(ABC):
         self.params = params
         self.LP_latlon_deg = params.get('LP_latlon_deg', None)
         self.AP_latlon_deg = params.get('AP_latlon_deg', None)
+        self.build_data = None
+        self.trajectory_data = None
 
     @abstractmethod
     def build(self) -> None:
@@ -166,3 +171,22 @@ class Missile(ABC):
         return rad_to_deg(np.arctan(
             vertical_velocity_km_sec / horizontal_velocity_km_sec
         ))
+    
+    def create_kml_trajectory(
+        self,
+        kml_document: simplekml.Document,
+    ) -> simplekml.Document:
+        """Convert missile trajectory data to KML.
+
+        Arguments:
+            kml_document: simplekml document in which to add KML trajectory data
+
+        Returns:
+            simplekml document > missile folder > timestep folders > 
+            COLLADA model and linestring elements
+        """
+        kml_converter = KMLTrajectoryConverter(
+            self.params,
+            self.trajectory_data,
+        )
+        return kml_converter.create_kml_trajectory(kml_document)

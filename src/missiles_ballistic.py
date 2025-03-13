@@ -13,9 +13,7 @@ from typing import Dict, Optional
 
 import numpy as np
 
-import simplekml
 
-from src.kml_converters import KMLTrajectoryConverter
 from src.missiles_abstract import Missile
 from src.utils import get_constants
 from src.utils_geo import (
@@ -55,8 +53,6 @@ class BallisticMissile(Missile):
             params: dict of user-defined parameter values
         """
         super(BallisticMissile, self).__init__(params)
-        self.build_data = None
-        self.trajectory_data = None
 
     def build(self) -> None:
         """Compute static characteristics of ballistic missile:
@@ -99,8 +95,7 @@ class BallisticMissile(Missile):
         
         Arguments
             stoptime_sec: maximum time (seconds) for which to calculate missile
-                position and orientation; if None (default), use total time to 
-                target
+                position and orientation; if None (default), use total time to target
         """
         traj_dict = OrderedDict()
         if stoptime_sec is None:
@@ -202,22 +197,3 @@ class BallisticMissile(Missile):
             self.build_data['initial_vertical_velocity_km_sec'] 
             + change_in_velocity
         )
-
-    def create_kml_trajectory(
-        self,
-        kml_document: simplekml.Document,
-    ) -> simplekml.Document:
-        """Convert missile trajectory data to KML.
-
-        Arguments:
-            kml_document: simplekml document in which to add KML trajectory data
-
-        Returns:
-            simplekml document > missile folder > timestep folders > 
-            COLLADA model and linestring elements
-        """
-        kml_converter = KMLTrajectoryConverter(
-            self.params,
-            self.trajectory_data,
-        )
-        return kml_converter.create_kml_trajectory(kml_document)
