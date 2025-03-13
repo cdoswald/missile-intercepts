@@ -9,13 +9,13 @@ import pandas as pd
 
 import simplekml
 
-from missiles_ballistic import BallisticMissile
-from utils_kml import save_kmz
+from src.missiles_ballistic import BallisticMissile
+from src.utils_kml import save_kmz
 
 # Define functions
 def main() -> None:
     """Main execution for missile intercept model."""
-    config = parse_config('../config/config.xlsx')
+    config = parse_config('config/config.xlsx')
     for group, sim_params_dict in config.items():
         kml = simplekml.Kml()
         for sim, params in sim_params_dict.items():
@@ -25,9 +25,9 @@ def main() -> None:
             kml = missile.create_kml_trajectory(kml)
         save_kmz(
             kml=kml,
-            output_dir='../kml',
+            output_dir='kml',
             output_file_name=group,
-            attachment_dir='../blender',
+            attachment_dir='blender',
             attachment_files_list=['test_missile.dae'],
         )
 
