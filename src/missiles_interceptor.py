@@ -126,14 +126,15 @@ class TerminalInterceptor(Missile):
         traj_dict = OrderedDict()
         if stoptime_sec is None:
             stoptime_sec = self.build_data['interceptor_time_to_intercept_sec']
-        for elapsed_time_sec in np.arange(
-            start=0,
-            stop=(stoptime_sec + self.params['timestep_sec']),
-            step=self.params['timestep_sec'],
-        ):
+        for elapsed_time_sec in np.arange(0, stoptime_sec, self.params['timestep_sec']):
             position_dict = self.get_current_position(elapsed_time_sec)
             orientation_dict = self.get_current_orientation(elapsed_time_sec)
             traj_dict[elapsed_time_sec] = {**position_dict, **orientation_dict}
+        # Final position and orientation
+        traj_dict[round(stoptime_sec, 3)] = {
+            **self.get_current_position(stoptime_sec),
+            **self.get_current_orientation(stoptime_sec)
+        }
         self.trajectory_data = traj_dict
 
     def get_current_position(self, elapsed_time_sec: float) -> Dict:
@@ -179,8 +180,6 @@ class TerminalInterceptor(Missile):
         position_dict = self.get_current_position(elapsed_time_sec)
         position_latlon_deg = (position_dict['lat_deg'], position_dict['lon_deg'])
         current_bearing_deg = self.compute_bearing(position_latlon_deg)
-        print(f"elapsed time: {elapsed_time_sec}; AP latlon: {self.AP_latlon_deg}; position latlon: {position_latlon_deg}")
-        print(f"current bearing: {current_bearing_deg}")
         current_tilt_deg = rad_to_deg(convert_trig_to_compass_angle(np.arctan2(
             self.compute_current_vertical_velocity(elapsed_time_sec),
             self.build_data['horizontal_velocity_km_sec'],
