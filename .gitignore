@@ -1,11 +1,10 @@
-# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
+*.egg-info
 
-# Archived files
 _Archive/
+.mp4
 
-# Dashboard (in progress)
 src/app.py
 src/config.py
