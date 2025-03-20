@@ -4,7 +4,7 @@ __pycache__/
 *.egg-info
 
 _Archive/
-.mp4
+*.mp4
 
 src/app.py
 src/config.py
