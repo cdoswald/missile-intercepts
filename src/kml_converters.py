@@ -57,6 +57,8 @@ class KMLTrajectoryConverter():
         self,
         kml_document: simplekml.Document,
         folder_name: str,
+        traj_color: simplekml.Color,
+        traj_width: int = 2,
     ) -> simplekml.Document:
         """Create KML model and linestring objects for missile trajectory.
         
@@ -67,10 +69,7 @@ class KMLTrajectoryConverter():
             simplekml document > missile folder > timestep folders > 
             COLLADA model and linestring elements
         """
-        linestring_style = create_kml_linestring_style(
-            color=simplekml.Color.blanchedalmond,
-            width=2,
-        )
+        linestring_style = create_kml_linestring_style(color=traj_color, width=traj_width)
         kml_missile_folder = kml_document.newfolder(name=folder_name)
         for time_idx, position_dict in self.trajectory_data.items():
             kml_timestep_folder = kml_missile_folder.newfolder(

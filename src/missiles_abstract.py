@@ -176,6 +176,8 @@ class Missile(ABC):
         self,
         kml_document: simplekml.Document,
         folder_name: str,
+        traj_color: simplekml.Color,
+        traj_width: int = 2,
     ) -> simplekml.Document:
         """Convert missile trajectory data to KML.
 
@@ -190,4 +192,9 @@ class Missile(ABC):
             self.params,
             self.trajectory_data,
         )
-        return kml_converter.create_kml_trajectory(kml_document, folder_name)
+        return kml_converter.create_kml_trajectory(
+            kml_document,
+            folder_name,
+            traj_color,
+            traj_width,
+        )

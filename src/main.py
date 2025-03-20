@@ -36,7 +36,8 @@ def main(config_path: str) -> None:
                     interceptor.launch()
                     kml = interceptor.create_kml_trajectory(
                         kml,
-                        interceptor_params["interceptor_name"]
+                        interceptor_params["interceptor_name"],
+                        simplekml.Color.limegreen,
                     )
                     # Update missile intercept time with earliest time
                     if missile_intercept_time is None:
@@ -50,7 +51,11 @@ def main(config_path: str) -> None:
                 missile.launch(stoptime_sec=missile_intercept_time)
             else:
                 missile.launch()
-            kml = missile.create_kml_trajectory(kml, params["missile_name"])
+            kml = missile.create_kml_trajectory(
+                kml,
+                params["missile_name"],
+                simplekml.Color.blanchedalmond,
+            )
 
         # Save group KML file
         save_kmz(
