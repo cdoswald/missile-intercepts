@@ -79,25 +79,29 @@ class KMLTrajectoryConverter():
             timespan_begin, timespan_end = self.compute_timespan_start_end_times(
                 time_idx
             )
-            # Add 3D model
-            add_kml_model(
-                kml_folder=kml_timestep_folder,
-                lat_deg=position_dict['lat_deg'],
-                lon_deg=position_dict['lon_deg'],
-                alt_meters=km_to_meters(position_dict['alt_km']),
-                collada_model_link=self.params['collada_model_path'],
-                heading_deg=position_dict['bearing_deg'],
-                tilt_deg=position_dict['tilt_deg'],
-                roll_deg=position_dict['roll_deg'],
-                x_scale=self.params['collada_model_scale'],
-                y_scale=self.params['collada_model_scale'],
-                z_scale=self.params['collada_model_scale'],
-                timespan_begin=timespan_begin.strftime(constants['KML_TIME_FORMAT']),
-                timespan_end=timespan_end.strftime(constants['KML_TIME_FORMAT']),
-            )
+            # Add 3D model for intermediate positions
+            if time_idx != max(self.trajectory_data.keys()):
+                add_kml_model(
+                    kml_folder=kml_timestep_folder,
+                    lat_deg=position_dict['lat_deg'],
+                    lon_deg=position_dict['lon_deg'],
+                    alt_meters=km_to_meters(position_dict['alt_km']),
+                    collada_model_link=self.params['collada_model_path'],
+                    heading_deg=position_dict['bearing_deg'],
+                    tilt_deg=position_dict['tilt_deg'],
+                    roll_deg=position_dict['roll_deg'],
+                    x_scale=self.params['collada_model_scale'],
+                    y_scale=self.params['collada_model_scale'],
+                    z_scale=self.params['collada_model_scale'],
+                    timespan_begin=timespan_begin.strftime(constants['KML_TIME_FORMAT']),
+                    timespan_end=timespan_end.strftime(constants['KML_TIME_FORMAT']),
+                )
             # Add linestring indicating trajectory over previous timestep
             if time_idx != min(self.trajectory_data.keys()):
-                prev_time_idx = time_idx - self.params['timestep_sec']
+                if time_idx != max(self.trajectory_data.keys()):
+                    prev_time_idx = time_idx - self.params['timestep_sec']
+                else:
+                    prev_time_idx = sorted(self.trajectory_data.keys())[-2]
                 prev_position_dict = self.trajectory_data[prev_time_idx]  
                 lon_lat_alt_list = [
                     (
