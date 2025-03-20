@@ -179,6 +179,8 @@ class TerminalInterceptor(Missile):
         position_dict = self.get_current_position(elapsed_time_sec)
         position_latlon_deg = (position_dict['lat_deg'], position_dict['lon_deg'])
         current_bearing_deg = self.compute_bearing(position_latlon_deg)
+        print(f"elapsed time: {elapsed_time_sec}; AP latlon: {self.AP_latlon_deg}; position latlon: {position_latlon_deg}")
+        print(f"current bearing: {current_bearing_deg}")
         current_tilt_deg = rad_to_deg(convert_trig_to_compass_angle(np.arctan2(
             self.compute_current_vertical_velocity(elapsed_time_sec),
             self.build_data['horizontal_velocity_km_sec'],
