@@ -15,6 +15,12 @@ uncertainty about the missile's launchpoint, intended target, current position, 
   </a>
 </p>
 
+<p>
+  <a href="docs/images/demo.gif">
+  <img src="docs/images/demo.gif" alt="demo" width="700"/>
+  </a>
+</p>
+
 ## Getting Started
 
 ### Setting Up the Virtual Environment
