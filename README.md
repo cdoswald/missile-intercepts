@@ -47,9 +47,11 @@ If you want to make modifications (e.g., to code, KML files) that persist outsid
 
 ### Setting Model Parameters
 
-All configuration parameters are set via the [Config](config/config.xlsx) file.
+All configuration parameters are set via the [Config](config/config.xlsx) file. 
 
-Parameter descriptions, formats, and datatypes are specified in the Config file.
+Note that there are two tabs: `ballistic` and `interceptor`. 
+
+Parameter descriptions, formats, and datatypes are specified in each tab.
 
 <p>
   <a href="config/config.xlsx">
@@ -57,7 +59,7 @@ Parameter descriptions, formats, and datatypes are specified in the Config file.
   </a>
 </p>
 
-Additional missile simulations can be created by adding new columns to the right of the existing simulations.
+Additional simulations can be created by adding new columns to the right of the existing simulations.
 
 ### Running the Model
 
@@ -70,16 +72,20 @@ To run the missile intercept model:
 
 ## Methodology
 
+All time variables are specified in seconds.
+
 ### Ballistic Missile
 
-* User specifies the latitude and longitude of the missile launchpoint (LP) and aimpoint (AP) and the missile's constant horizontal velocity (km/s), which are used to calculate the [great-circle distance](https://en.wikipedia.org/wiki/Haversine_formula) to the target (km) and total time-to-target (sec)
-* The apogee of the ballistic trajectory is reached when the missile is halfway to the target (i.e., 0.5 * total time-to-target)
-* The time-to-apogee (sec) is multiplied by the absolute value of the gravitational acceleration (km/s^2) to determine the missile's initial vertical velocity (km/s)
-* Integrating the vertical velocity equation, the missile's altitude (km) at timestep *t* (sec) is calculated as `alt_km(t) = initial_vertical_velocity * t + 0.5 * gravitational_acceleration * t^2`
+* User specifies the latitude and longitude of the missile launchpoint (LP) and aimpoint (AP) and the missile's constant horizontal velocity (km/s), which are used to calculate the [great-circle distance](https://en.wikipedia.org/wiki/Haversine_formula) to the target (km) and total time-to-target.
+* The apogee of the ballistic trajectory is reached when the missile is halfway to the target (i.e., 0.5 * total time-to-target).
+* The time-to-apogee is multiplied by the absolute value of the gravitational acceleration (km/s^2) to determine the missile's initial vertical velocity (km/s).
+* Integrating the vertical velocity equation, the missile's altitude (km) at timestep *t* is calculated as `alt_km(t) = initial_vertical_velocity * t + 0.5 * gravitational_acceleration * t^2`.
 
-### Terminal Interceptor
+### Terminal Phase Interceptor
 
-* [IN PROGRESS]
+* User specifies the latitude and longitude of the interceptor launchpoint (LP); the interceptor's constant horizontal velocity (km/s); the name of the missile to intercept; and the desired distance away from the target (km) at which to intercept the missile. That information is used to calculate the intercept position (latitude, longitude, and altitude (km)) and time relative to the ballistic missile launch.
+* The ground distance between the interceptor LP and the intercept position is divided by the interceptor constant horizontal velocity (km/s) to determine the intercept time relative to the interceptor launch, which is used to calculate the initial launch velocity (km/s) and launch angle required to counteract gravity.
+* The interceptor launch time is calculated as `targeted_missile_launch_time + intercept_time_relative_to_missile_launch - intercept_time_relative_to_interceptor_launch`.
 
 ### Limitations 
 
