@@ -3,7 +3,7 @@ Interceptor missile classes.
 
 Contents:
     Public classes:
-        TerminalInterceptor [IN PROGRESS]
+        TerminalInterceptor
 """
 # Import packages
 from collections import OrderedDict
@@ -32,17 +32,40 @@ constants = get_constants()
 class TerminalInterceptor(Missile):
     """Base class for terminal phase interceptors.
 
-    Attributes
+    Attributes:
+        params: dict of user-defined parameter values
+        LP_latlon_deg: tuple of launchpoint (latitude, longitude) in degrees
+        AP_latlon_deg: tuple of aimpoint (latitude, longitude) in degrees
+        build_data: dict of static characteristics of ballistic missile
+        trajectory_data: dict of missile position/orientation for each timestep
+        targeted_missile: BallisticMissile class that TerminalInterceptor targets
+        intercept_position: dict of intercept position (lat_deg, lon_deg, alt_km)
+        intercept_time_sec: time of intercept (seconds) relative to BallisticMissile launch
 
-    Methods
-
+    Methods:
+        build
+        launch
+        set_launchpoint
+        set_aimpoint
+        set_intercept_target
+        get_current_position
+        get_current_orientation
+        get_intercept_time_and_position
+        get_interceptor_launch_time
+        compute_initial_vertical_velocity
+        compute_current_vertical_velocity
+        compute_velocity
+        compute_altitude_angle
+        compute_bearing
+        compute_distance_to_target
+        create_kml_trajectory
     """
     
     def __init__(self, params: Dict) -> None:
         """Instantiate TerminalInterceptor.
         
-        Arguments:
-
+        Arguments
+            params: dict of user-defined parameter values
         """
         super().__init__(params)
         self.targeted_missile = None
@@ -226,7 +249,7 @@ class TerminalInterceptor(Missile):
         change_in_velocity = constants['GRAVITY_ACCEL_KM_PER_S2'] * elapsed_time_sec
         return (self.build_data['initial_vertical_velocity_km_sec'] + change_in_velocity)
 
-    def check_missile_in_interceptor_ground_range(self) -> bool:
-        """If max range set, determine if targeted missile trajectory 
-        is within ground range of interceptor at any point prior to impact."""
-        pass # calculate_cross_track_distance
+    # def check_missile_in_interceptor_ground_range(self) -> bool:
+    #     """If max range set, determine if targeted missile trajectory 
+    #     is within ground range of interceptor at any point prior to impact."""
+    #     pass # calculate_cross_track_distance

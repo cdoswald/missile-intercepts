@@ -39,10 +39,16 @@ class BallisticMissile(Missile):
     Methods:
         build
         launch
+        set_launchpoint
+        set_aimpoint
         get_current_position
         get_current_orientation
         compute_initial_vertical_velocity
         compute_current_vertical_velocity
+        compute_velocity
+        compute_altitude_angle
+        compute_bearing
+        compute_distance_to_target
         create_kml_trajectory
     """
 
