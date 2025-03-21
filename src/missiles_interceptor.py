@@ -109,9 +109,6 @@ class TerminalInterceptor(Missile):
             self.intercept_position["lat_deg"], self.intercept_position["lon_deg"]
         )
         ground_dist_to_intercept_km = self.compute_distance_to_target(self.LP_latlon_deg)
-        dist_to_intercept_km = (
-            (ground_dist_to_intercept_km**2 + self.intercept_position["alt_km"]**2) ** (1/2)
-        )
         interceptor_time_to_intercept_sec = (
             ground_dist_to_intercept_km / self.params["horizontal_velocity_km_sec"]
         )
@@ -128,7 +125,6 @@ class TerminalInterceptor(Missile):
         )
         self.build_data = {
             'launchpoint_ground_dist_to_intercept_km':ground_dist_to_intercept_km,
-            'launchpoint_dist_to_intercept_km':dist_to_intercept_km,
             'launchpoint_bearing_deg':self.compute_bearing(self.LP_latlon_deg),
             'interceptor_time_to_intercept_sec':interceptor_time_to_intercept_sec,
             'horizontal_velocity_km_sec':self.params['horizontal_velocity_km_sec'],
@@ -217,7 +213,7 @@ class TerminalInterceptor(Missile):
         """Calculate interceptor launch time in absolute terms relative to
         enemy missile launch time."""
         interceptor_launch_time = (
-            self.targeted_missile.params["launch_time"] 
+            self.targeted_missile.params["launch_time"]
             + timedelta(seconds=self.intercept_time_sec)
             - timedelta(seconds=self.build_data["interceptor_time_to_intercept_sec"])
         )
