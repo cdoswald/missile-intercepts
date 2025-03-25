@@ -1,0 +1,24 @@
+name: Run Unit Tests in Docker
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t missile_env .
+
+      - name: Run Docker image and unit tests
+        run: docker run -t missile_env bash -c "pytest src/tests"
+
+      - name: Remove Docker image
+        run: docker rmi missile_env
