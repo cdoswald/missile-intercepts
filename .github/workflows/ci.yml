@@ -1,4 +1,4 @@
-name: Run Unit Tests in Docker
+name: Unit Testing in Docker
 
 on:
   push:
