@@ -22,5 +22,5 @@ jobs:
 
       - name: Remove Docker image
         run: |
-          docker stop temp
-          docker rmi missile_env
+          docker rm -f temp
+          docker rmi -f missile_env
