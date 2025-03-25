@@ -1,5 +1,7 @@
 # A Probabilistic Missile Intercept Model
 
+[![All Tests](https://github.com/cdoswald/missile-intercepts/actions/workflows/ci.yml/badge.svg)](https://github.com/cdoswald/missile-intercepts/actions/workflows/ci.yml)
+
 The primary goals for this project are to:
 
 1) Develop a simplified missile intercept model and simulate the model in Google Earth
