@@ -18,9 +18,9 @@ jobs:
         run: docker build -t missile_env .
 
       - name: Run Docker image and unit tests
-        run: docker run --name missile_env conda run -n missile_env python -m pytest src/tests
+        run: docker run --name temp missile_env conda run -n missile_env python -m pytest src/tests
 
       - name: Remove Docker image
         run: |
-          docker stop missile_env
+          docker stop temp
           docker rmi missile_env
