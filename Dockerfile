@@ -17,4 +17,4 @@ SHELL ["conda", "run", "-n", "missile_env", "/bin/bash", "-c"]
 
 COPY . .
 
-RUN pip install -e .
+RUN pip install -e . && pip install pytest
