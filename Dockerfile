@@ -2,14 +2,17 @@ FROM continuumio/miniconda3
 
 WORKDIR /app
 
-RUN conda config --add channels defaults
-RUN conda config --add channels conda-forge
-RUN conda update conda
+RUN conda config --add channels defaults && \
+    conda config --add channels conda-forge && \
+    conda update conda
 
 COPY /docs/env/environment.yml ./docs/env/environment.yml
-
 RUN conda env create -f ./docs/env/environment.yml --platform linux-64
 
+# Activate Conda if interactive mode
+RUN echo "source /opt/conda/etc/profile.d/conda.sh && conda activate missile_env" >> ~/.bashrc
+
+# Run commands in Conda if non-interactive mode
 SHELL ["conda", "run", "-n", "missile_env", "/bin/bash", "-c"]
 
 COPY . .
