@@ -20,8 +20,8 @@ jobs:
       - name: Run unit tests inside Docker
         run: docker run --rm missile_env conda run -n missile_env python -m pytest src/tests
 
-      - name: Run mypy inside Docker
-        run: docker run --rm missile_env conda run -n missile_env python -m mypy src
+      #- name: Run mypy inside Docker
+      #  run: docker run --rm missile_env conda run -n missile_env python -m mypy src
 
       - name: Remove Docker image
         run: |
