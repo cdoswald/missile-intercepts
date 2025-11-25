@@ -27,23 +27,20 @@ uncertainty about the missile's launchpoint, intended target, current position, 
 
 ### Setting Up the Virtual Environment
 
-The [environment.yml](docs/env/environment.yml) file contains all of the packages needed to run the code in this repository:
+The [environment.yml](environment.yml) file contains all of the packages needed to run the code in this repository:
 
 1. Open an Anaconda Prompt
-2. Create a new virtual environment: `conda env create -f docs/env/environment.yml`
+2. Create a new virtual environment: `conda env create -f environment.yml`
 3. Activate the virtual environment: `conda activate missile_env`
 
 ### Docker Container
 
 Alternatively, you can run the code in a Docker container:
 
-1. Build the Docker image from Dockerfile: `docker build -t missile_env .`
-2. Run the Docker image in interactive mode: `docker run -it missile_env`
-
-If you want to make modifications (e.g., to code, KML files) that persist outside of the container:
-
-1. Use the docker-compose file to build the image: `docker-compose up --build`
-2. Run the Docker image in interactive mode: `docker-compose run --rm missile_env`
+1. Use the docker-compose file to build and run the image in detached mode: `docker-compose up --build -d`
+2. Confirm the container is running: `docker ps`
+3. Connect to the container from your IDE or run in interactive mode from the terminal: `docker-compose exec env bash`
+4. When you're ready to exit, run: `docker-compose down`
 
 ### Setting Model Parameters
 

@@ -1,7 +1,10 @@
 services:
-  missile_env:
+  env:
     build: 
       context: .
       dockerfile: Dockerfile
+    image: mi-image
+    container_name: mi-container
     volumes:
       - .:/app
+    tty: true
