@@ -15,14 +15,13 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Build Docker image
-        run: docker build -t missile_env .
+        run: docker-compose build
 
-      - name: Run unit tests inside Docker
-        run: docker run --rm missile_env conda run -n missile_env python -m pytest src/tests
+      - name: Run unit tests inside Docker container
+        run: docker-compose run --rm env pytest src/tests
 
-      #- name: Run mypy inside Docker
-      #  run: docker run --rm missile_env conda run -n missile_env python -m mypy src --ignore-missing-imports
+      #- name: Run mypy inside Docker container
+      #  run: docker-compose run --rm env python -m mypy src --ignore-missing-imports
 
       - name: Remove Docker image
-        run: |
-          docker rmi -f missile_env
+        run: docker-compose down --rmi local -v
