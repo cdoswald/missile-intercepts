@@ -1,20 +1,17 @@
-FROM continuumio/miniconda3
+FROM mambaorg/micromamba
 
+# Install packages
+COPY environment.yml ./environment.yml
+RUN micromamba install -y -n base -f ./environment.yml && micromamba clean --all
+
+# Copy source code into app folder
 WORKDIR /app
-
-RUN conda config --add channels defaults && \
-    conda config --add channels conda-forge && \
-    conda update conda
-
-COPY /docs/env/environment.yml ./docs/env/environment.yml
-RUN conda env create -f ./docs/env/environment.yml --platform linux-64
-
-# Activate Conda if interactive mode
-RUN echo "source /opt/conda/etc/profile.d/conda.sh && conda activate missile_env" >> ~/.bashrc
-
-# Run commands in Conda if non-interactive mode
-SHELL ["conda", "run", "-n", "missile_env", "/bin/bash", "-c"]
-
 COPY . .
 
-RUN pip install -e .
+# Add permissions to mamba user
+USER root
+RUN chown -R $MAMBA_USER:$MAMBA_USER /app
+USER $MAMBA_USER
+
+# Install source code as package
+RUN micromamba run -n base pip install -e .
